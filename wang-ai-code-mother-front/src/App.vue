@@ -6,6 +6,7 @@
     Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
     documentation
   </p>
+  <a-button type="primary">123</a-button>
 </template>
 
 <style scoped></style>
