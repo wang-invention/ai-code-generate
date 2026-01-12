@@ -3,6 +3,7 @@ package com.wang.wangaicodemother.service;
 import com.mybatisflex.core.service.IService;
 import com.wang.wangaicodemother.model.entity.User;
 import com.wang.wangaicodemother.model.vo.LoginUserVO;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 用户 服务层。
@@ -33,4 +34,17 @@ public interface UserService extends IService<User> {
      */
     LoginUserVO userLogin(String userAccount, String userPassword);
 
+    /**
+     * 获取当前登录用户
+     */
+    User getLoginUser(HttpServletRequest  request);
+
+    LoginUserVO getLoginUserVO(User loginUser);
+
+    /**
+     * 退出登录
+     * @param request
+     * @return
+     */
+    String userLogout(HttpServletRequest request);
 }

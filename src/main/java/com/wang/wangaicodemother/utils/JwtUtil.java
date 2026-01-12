@@ -1,5 +1,6 @@
 package com.wang.wangaicodemother.utils;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -26,4 +27,19 @@ public class JwtUtil {
                 .signWith(KEY, SignatureAlgorithm.HS256)
                 .compact();
     }
+    /**
+     * 解析 JWT token
+     */
+    public static Claims parseToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(KEY)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    public static Date getExpiration(String token) {
+        return parseToken(token).getExpiration();
+    }
+
 }

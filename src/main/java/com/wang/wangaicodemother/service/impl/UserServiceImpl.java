@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import com.wang.wangaicodemother.common.ResultUtils;
 import com.wang.wangaicodemother.enums.UserRoleEnum;
 import com.wang.wangaicodemother.exception.BusinessException;
 import com.wang.wangaicodemother.exception.ErrorCode;
@@ -12,12 +13,17 @@ import com.wang.wangaicodemother.mapper.UserMapper;
 import com.wang.wangaicodemother.model.vo.LoginUserVO;
 import com.wang.wangaicodemother.service.UserService;
 import com.wang.wangaicodemother.utils.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -31,6 +37,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -105,4 +114,45 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         loginUserVO.setToken(JwtUtil.generateToken(user.getId(), user.getUserRole()));
         return loginUserVO;
     }
+
+    @Override
+    public User getLoginUser(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        return userMapper.selectOneById(userId);
+    }
+
+    @Override
+    public LoginUserVO getLoginUserVO(User loginUser) {
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户数据为空");
+        }
+        LoginUserVO loginUserVO = new LoginUserVO();
+        BeanUtil.copyProperties(loginUser, loginUserVO);
+        return loginUserVO;
+    }
+
+    @Override
+    public String  userLogout(HttpServletRequest request) {
+
+        String authHeader = request.getHeader("Authorization");
+        if (StringUtils.isBlank(authHeader) || !authHeader.startsWith("Bearer ")) {
+            return "已退出";
+        }
+
+        String token = authHeader.replace("Bearer ", "");
+        // token 剩余有效期
+        Date expiration = JwtUtil.getExpiration(token);
+        long ttl = expiration.getTime() - System.currentTimeMillis();
+
+        if (ttl > 0) {
+            redisTemplate.opsForValue()
+                    .set("jwt:blacklist:" + token, "1", ttl, TimeUnit.MILLISECONDS);
+        }
+        return "退出成功";
+    }
+
+
 }

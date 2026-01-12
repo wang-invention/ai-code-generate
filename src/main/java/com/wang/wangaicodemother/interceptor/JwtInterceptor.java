@@ -9,6 +9,8 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -22,6 +24,10 @@ public class JwtInterceptor implements HandlerInterceptor {
 
 
     private final JwtProperties jwtProperties;
+
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     private static final String SECRET = "wangfaming666wangfaming666wangfaming66"; // 必须 >=32 字节
     private static final Key KEY = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
@@ -40,12 +46,21 @@ public class JwtInterceptor implements HandlerInterceptor {
             return true;
         }
 
+
         String authHeader = request.getHeader("Authorization");
         if (StringUtils.isBlank(authHeader)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "token???");
         }
 
+
         String token = authHeader.replace("Bearer ", "").trim();
+
+        // 校验是否在黑名单
+        if (Boolean.TRUE.equals(
+                redisTemplate.hasKey("jwt:blacklist:" + token))) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "token已失效");
+        }
+
         try {
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(KEY)

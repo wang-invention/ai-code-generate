@@ -8,6 +8,7 @@ import com.wang.wangaicodemother.exception.ThrowUtils;
 import com.wang.wangaicodemother.model.dto.UserLoginRequest;
 import com.wang.wangaicodemother.model.dto.UserRegisterRequest;
 import com.wang.wangaicodemother.model.vo.LoginUserVO;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,7 +41,7 @@ public class UserController {
      * @param userRegisterRequest 注册用户参数
      * @return 注册结果
      */
-    @PostMapping("register")
+    @PostMapping("/register")
     public BaseResponse<Long> register(@RequestBody UserRegisterRequest userRegisterRequest) {
         ThrowUtils.throwIf(userRegisterRequest == null, ErrorCode.PARAMS_ERROR);
         String userPassword = userRegisterRequest.getUserPassword();
@@ -53,12 +54,29 @@ public class UserController {
     /**
      * 登录
      */
-    @PostMapping("login")
+    @PostMapping("/login")
     public BaseResponse<LoginUserVO> login(@RequestBody UserLoginRequest userLoginRequest) {
         ThrowUtils.throwIf(userLoginRequest == null, ErrorCode.PARAMS_ERROR);
         String userAccount = userLoginRequest.getUserAccount();
         String userPassword = userLoginRequest.getUserPassword();
         return ResultUtils.success(userService.userLogin(userAccount, userPassword));
+    }
+
+
+    @PostMapping("/logout")
+    public BaseResponse<String> logout(HttpServletRequest request) {
+        return ResultUtils.success(userService.userLogout(request));
+    }
+
+    /**
+     * 获取当前登录用户。
+     *
+     * @return 当前登录用户
+     */
+    @GetMapping("/get/login")
+    public BaseResponse<LoginUserVO> getCurrentUser(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(userService.getLoginUserVO(loginUser));
     }
 
 
