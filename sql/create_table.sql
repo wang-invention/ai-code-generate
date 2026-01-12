@@ -1,7 +1,7 @@
 
 
---创建库
-create database if not exists wang_ai_code_father;
+-- 创建库
+create database if not exists wang_ai_code_mother;
 use wang_ai_code_father;
 -- 用户表
 create table if not exists user
