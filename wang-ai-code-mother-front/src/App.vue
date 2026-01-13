@@ -1,17 +1,33 @@
 <script setup lang="ts">
+import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import BasicLayout from './layouts/BasicLayout.vue'
-import { useLoginUserStore } from '@/stores/LoginUser.ts'
+import { useLoginUserStore } from '@/stores/LoginUser'
 
+const route = useRoute()
 const loginUserStore = useLoginUserStore()
-loginUserStore.fetchLoginUser()
+
+const isAuthPage = computed(() => {
+  return route.path === '/user/login' || route.path === '/user/register'
+})
+
+onMounted(() => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    loginUserStore.loadLoginUserFromStorage()
+    if (!isAuthPage.value) {
+      loginUserStore.fetchLoginUser()
+    }
+  }
+})
 </script>
 
 <template>
-  <BasicLayout />
+  <BasicLayout v-if="!isAuthPage" />
+  <router-view v-else />
 </template>
 
 <style>
-/* 全局样式重置 */
 * {
   margin: 0;
   padding: 0;

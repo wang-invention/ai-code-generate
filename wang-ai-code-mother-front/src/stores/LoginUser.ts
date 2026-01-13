@@ -7,19 +7,52 @@ export const useLoginUserStore = defineStore('loginUser', () => {
     userName: '未登录',
   })
 
-  async function fetchLoginUser() {
-    const res = await getCurrentUser()
-    if (res.data.code === 0 && res.data.data) {
-      setLoginUser(res.data.data)
-    }
-  }
+  const isLogin = computed(() => {
+    return !!loginUser.value.id
+  })
 
   function setLoginUser(user: API.LoginUserVO) {
     loginUser.value = user
+    localStorage.setItem('loginUser', JSON.stringify(user))
   }
+
+  function loadLoginUserFromStorage() {
+    const savedUser = localStorage.getItem('loginUser')
+    if (savedUser) {
+      try {
+        loginUser.value = JSON.parse(savedUser)
+      } catch (e) {
+        console.error('Failed to parse saved user:', e)
+        localStorage.removeItem('loginUser')
+      }
+    }
+  }
+
+  async function fetchLoginUser() {
+    try {
+      const res = await getCurrentUser()
+      if (res.data.code === 0 && res.data.data) {
+        setLoginUser(res.data.data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch login user:', error)
+    }
+  }
+
+  function clearLoginUser() {
+    loginUser.value = {
+      userName: '未登录',
+    }
+    localStorage.removeItem('loginUser')
+    localStorage.removeItem('token')
+  }
+
   return {
     loginUser,
+    isLogin,
     fetchLoginUser,
     setLoginUser,
+    loadLoginUserFromStorage,
+    clearLoginUser,
   }
 })
