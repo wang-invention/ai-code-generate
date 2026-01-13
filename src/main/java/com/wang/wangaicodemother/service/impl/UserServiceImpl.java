@@ -1,6 +1,7 @@
 package com.wang.wangaicodemother.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -8,9 +9,11 @@ import com.wang.wangaicodemother.common.ResultUtils;
 import com.wang.wangaicodemother.enums.UserRoleEnum;
 import com.wang.wangaicodemother.exception.BusinessException;
 import com.wang.wangaicodemother.exception.ErrorCode;
+import com.wang.wangaicodemother.model.dto.UserQueryRequest;
 import com.wang.wangaicodemother.model.entity.User;
 import com.wang.wangaicodemother.mapper.UserMapper;
 import com.wang.wangaicodemother.model.vo.LoginUserVO;
+import com.wang.wangaicodemother.model.vo.UserVO;
 import com.wang.wangaicodemother.service.UserService;
 import com.wang.wangaicodemother.utils.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,8 +25,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 
 /**
@@ -153,6 +159,46 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         return "退出成功";
     }
+
+    @Override
+    public UserVO getUserVO(User user) {
+        if(user == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户数据为空");
+        }
+        UserVO userVO = new UserVO();
+        BeanUtil.copyProperties(user, userVO);
+        return userVO;
+    }
+
+    @Override
+    public List<UserVO> getUserVOList(List<User> userList) {
+        if(CollUtil.isEmpty(userList)){
+            return new ArrayList<>();
+        }
+        return userList.stream().map(this::getUserVO).collect(Collectors.toList());
+    }
+
+    @Override
+    public QueryWrapper getQueryWrapper(UserQueryRequest userQueryRequest) {
+        if (userQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
+        }
+        Long id = userQueryRequest.getId();
+        String userAccount = userQueryRequest.getUserAccount();
+        String userName = userQueryRequest.getUserName();
+        String userProfile = userQueryRequest.getUserProfile();
+        String userRole = userQueryRequest.getUserRole();
+        String sortField = userQueryRequest.getSortField();
+        String sortOrder = userQueryRequest.getSortOrder();
+        return QueryWrapper.create()
+                .eq("id", id)
+                .eq("userRole", userRole)
+                .like("userAccount", userAccount)
+                .like("userName", userName)
+                .like("userProfile", userProfile)
+                .orderBy(sortField, "ascend".equals(sortOrder));
+    }
+
 
 
 }

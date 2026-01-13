@@ -25,11 +25,10 @@ public class JwtInterceptor implements HandlerInterceptor {
 
     private final JwtProperties jwtProperties;
 
-
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    private static final String SECRET = "wangfaming666wangfaming666wangfaming66"; // 必须 >=32 字节
+    private static final String SECRET = "wangfaming666wangfaming666wangfaming66";
     private static final Key KEY = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
 
     public JwtInterceptor(JwtProperties jwtProperties) {

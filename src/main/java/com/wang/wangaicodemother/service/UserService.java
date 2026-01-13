@@ -1,9 +1,14 @@
 package com.wang.wangaicodemother.service;
 
+import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
+import com.wang.wangaicodemother.model.dto.UserQueryRequest;
 import com.wang.wangaicodemother.model.entity.User;
 import com.wang.wangaicodemother.model.vo.LoginUserVO;
+import com.wang.wangaicodemother.model.vo.UserVO;
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.List;
 
 /**
  * 用户 服务层。
@@ -47,4 +52,25 @@ public interface UserService extends IService<User> {
      * @return
      */
     String userLogout(HttpServletRequest request);
+
+
+    /**
+     * 获取脱敏的用户
+     */
+    UserVO getUserVO(User user);
+
+    /**
+     * 获取脱敏的用户列表
+     * @param userList
+     * @return
+     */
+    List<UserVO> getUserVOList(List<User> userList);
+
+
+    /**
+     * 获取查询条件
+     * @param userQueryRequest
+     * @return
+     */
+    QueryWrapper getQueryWrapper(UserQueryRequest userQueryRequest);
 }
