@@ -15,12 +15,25 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtInterceptor)
-                .addPathPatterns("/api/**")
+                .addPathPatterns("/**")
                 .excludePathPatterns(
+                        // ===== Swagger UI =====
+                        "/swagger-ui.html",
                         "/swagger-ui/**",
+                        "/v3/api-docs",
                         "/v3/api-docs/**",
+                        "/swagger-resources",
                         "/swagger-resources/**",
-                        "/webjars/**"
-                );
+
+                        // ===== 静态资源 =====
+                        "/webjars/**",
+                        "/favicon.ico",
+
+                        // ===== 你自己的白名单接口（示例）=====
+                        "/api/user/login",
+                        "/api/user/register"
+                )
+                .order(1);
     }
+
 }

@@ -36,5 +36,5 @@ knife4j:
     language: zh_cn
 jwt:
   while-list:
-    - /api/user/login
-    - /api/user/register
+    - /user/login
+    - /user/register

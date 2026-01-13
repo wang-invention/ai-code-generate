@@ -43,6 +43,22 @@ public class LoginUserVO implements Serializable {
      */
     private String token;
 
+
+    /**
+     * 手机号
+     */
+    private String phone;
+
+    /**
+     * 邮箱
+     */
+    private String email;
+
+    /**
+     * 密码
+     */
+    private String userPassword;
+
     /**
      * 创建时间
      */

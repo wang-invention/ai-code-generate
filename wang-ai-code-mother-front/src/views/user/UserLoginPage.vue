@@ -10,8 +10,8 @@ const route = useRoute()
 const loginUserStore = useLoginUserStore()
 
 const formState = reactive({
-  userAccount: '',
-  userPassword: ''
+  userAccount: 'wang',
+  userPassword: '12345678'
 })
 
 const loading = ref(false)
@@ -27,14 +27,14 @@ const handleLogin = async () => {
     const res = await login(formState)
     if (res.data.code === 0 && res.data.data) {
       message.success('登录成功')
-      
+
       const loginUserVO = res.data.data
       loginUserStore.setLoginUser(loginUserVO)
-      
+
       if (loginUserVO.token) {
         localStorage.setItem('token', loginUserVO.token)
       }
-      
+
       const redirect = (route.query.redirect as string) || '/'
       router.push(redirect)
     } else {
@@ -59,7 +59,7 @@ const goToRegister = () => {
         <h1>用户登录</h1>
         <p>欢迎来到AI零代码应用生成平台</p>
       </div>
-      
+
       <a-form
         :model="formState"
         layout="vertical"
@@ -72,7 +72,7 @@ const goToRegister = () => {
             size="large"
           />
         </a-form-item>
-        
+
         <a-form-item label="密码">
           <a-input-password
             v-model:value="formState.userPassword"
@@ -80,7 +80,7 @@ const goToRegister = () => {
             size="large"
           />
         </a-form-item>
-        
+
         <a-form-item>
           <a-button
             type="primary"
@@ -93,7 +93,7 @@ const goToRegister = () => {
           </a-button>
         </a-form-item>
       </a-form>
-      
+
       <div class="login-footer">
         <span>还没有账号？</span>
         <a @click="goToRegister">立即注册</a>

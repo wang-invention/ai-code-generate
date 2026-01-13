@@ -45,7 +45,6 @@ public class JwtInterceptor implements HandlerInterceptor {
             return true;
         }
 
-
         String authHeader = request.getHeader("Authorization");
         if (StringUtils.isBlank(authHeader)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "token???");
@@ -70,6 +69,7 @@ public class JwtInterceptor implements HandlerInterceptor {
             Long userId = Long.parseLong(claims.getSubject());
             request.setAttribute("userId", userId);
             request.setAttribute("userRole", claims.get("userRole"));
+
             return true;
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "token invalid");

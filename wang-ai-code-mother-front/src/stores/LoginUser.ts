@@ -42,6 +42,7 @@ export const useLoginUserStore = defineStore('loginUser', () => {
   function clearLoginUser() {
     loginUser.value = {
       userName: '未登录',
+      id: undefined
     }
     localStorage.removeItem('loginUser')
     localStorage.removeItem('token')

@@ -1,25 +1,241 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
+import { register } from '@/api/userController'
+
+const router = useRouter()
+
+const formState = reactive({
+  userAccount: '',
+  userPassword: '',
+  checkPassword: ''
+})
+
+const loading = ref(false)
+
+const handleRegister = async () => {
+  if (!formState.userAccount || !formState.userPassword || !formState.checkPassword) {
+    message.warning('请填写完整信息')
+    return
+  }
+
+  if (formState.userPassword !== formState.checkPassword) {
+    message.warning('两次输入的密码不一致')
+    return
+  }
+
+  if (formState.userPassword.length < 8) {
+    message.warning('密码长度不能少于8位')
+    return
+  }
+
+  loading.value = true
+  try {
+    const res = await register({
+      userAccount: formState.userAccount,
+      userPassword: formState.userPassword,
+      checkPassword: formState.checkPassword
+    })
+    if (res.data.code === 0) {
+      message.success('注册成功，请登录')
+      setTimeout(() => {
+        router.push('/user/login')
+      }, 1500)
+    } else {
+      message.error(res.data.message || '注册失败')
+    }
+  } catch (error) {
+    message.error('注册失败，请稍后重试')
+  } finally {
+    loading.value = false
+  }
+}
+
+const goToLogin = () => {
+  router.push('/user/login')
+}
+</script>
 
 <template>
-  <div class="home-view">
-    <h1>用户注册</h1>
-    <p>欢迎来到编程导航</p>
+  <div class="register-container">
+    <div class="register-box">
+      <div class="register-header">
+        <h1>用户注册</h1>
+        <p>欢迎加入AI零代码应用生成平台</p>
+      </div>
+
+      <a-form
+        :model="formState"
+        layout="vertical"
+        @submit.prevent="handleRegister"
+      >
+        <a-form-item label="账号">
+          <a-input
+            v-model:value="formState.userAccount"
+            placeholder="请输入账号"
+            size="large"
+          />
+        </a-form-item>
+
+        <a-form-item label="密码">
+          <a-input-password
+            v-model:value="formState.userPassword"
+            placeholder="请输入密码（至少8位）"
+            size="large"
+          />
+        </a-form-item>
+
+        <a-form-item label="确认密码">
+          <a-input-password
+            v-model:value="formState.checkPassword"
+            placeholder="请再次输入密码"
+            size="large"
+          />
+        </a-form-item>
+
+        <a-form-item>
+          <a-button
+            type="primary"
+            html-type="submit"
+            size="large"
+            block
+            :loading="loading"
+          >
+            注册
+          </a-button>
+        </a-form-item>
+      </a-form>
+
+      <div class="register-footer">
+        <span>已有账号？</span>
+        <a @click="goToLogin">立即登录</a>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.home-view {
-  padding: 24px;
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop') no-repeat center center;
+  background-size: cover;
+  position: relative;
 }
 
-.home-view h1 {
+.register-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+}
+
+.register-box {
+  position: relative;
+  width: 420px;
+  padding: 48px 40px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.6s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.register-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.register-header h1 {
   font-size: 32px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.register-header p {
+  font-size: 14px;
+  color: #666;
+}
+
+:deep(.ant-form-item-label > label) {
+  font-weight: 500;
   color: #333;
 }
 
-.home-view p {
+:deep(.ant-input),
+:deep(.ant-input-password) {
+  border-radius: 8px;
+  border: 2px solid #e8e8e8;
+  transition: all 0.3s;
+}
+
+:deep(.ant-input:hover),
+:deep(.ant-input-password:hover) {
+  border-color: #667eea;
+}
+
+:deep(.ant-input:focus),
+:deep(.ant-input-password:focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+:deep(.ant-btn-primary) {
+  height: 48px;
+  border-radius: 8px;
   font-size: 16px;
+  font-weight: 500;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  transition: all 0.3s;
+}
+
+:deep(.ant-btn-primary:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+:deep(.ant-btn-primary:active) {
+  transform: translateY(0);
+}
+
+.register-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 14px;
   color: #666;
+}
+
+.register-footer a {
+  color: #667eea;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.register-footer a:hover {
+  color: #764ba2;
+  text-decoration: underline;
 }
 </style>

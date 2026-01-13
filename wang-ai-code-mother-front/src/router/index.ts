@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import type { MenuProps } from 'ant-design-vue'
+import { useLoginUserStore } from '@/stores/LoginUser'
 
 // 菜单项配置
 export const menuItems: MenuProps['items'] = [
@@ -39,6 +40,16 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/user/UserRegisterPage.vue')
   },
   {
+    path: '/user/profile',
+    name: '个人中心',
+    component: () => import('../views/user/UserProfilePage.vue')
+  },
+  {
+    path: '/user/profile/edit',
+    name: '编辑资料',
+    component: () => import('../views/user/UserEditProfilePage.vue')
+  },
+  {
     path: '/admin/userManage',
     name: '用户管理',
     component: () => import('../views/admin/UserManagePage.vue')
@@ -71,6 +82,14 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  const loginUserStore = useLoginUserStore()
+
+  // 如果用户已登录但访问登录/注册页面，跳转到首页
+  if ((to.path === '/user/login' || to.path === '/user/register') && loginUserStore.isLogin) {
+    next('/')
+    return
+  }
+
   next()
 })
 

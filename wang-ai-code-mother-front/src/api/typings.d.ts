@@ -61,6 +61,9 @@ declare namespace API {
     userProfile?: string
     userRole?: string
     token?: string
+    phone?: string
+    email?: string
+    userPassword?: string
     createTime?: string
     updateTime?: string
   }
