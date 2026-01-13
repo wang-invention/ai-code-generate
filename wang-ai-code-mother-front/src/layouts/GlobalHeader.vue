@@ -2,6 +2,9 @@
 import { computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { menuItems } from '../router'
+import { useLoginUserStore } from '@/stores/LoginUser.ts'
+
+const loginUserStore = useLoginUserStore()
 
 const router = useRouter()
 const route = useRoute()
@@ -43,7 +46,16 @@ const handleMenuClick = ({ key }: { key: string }) => {
         />
       </div>
       <div class="header-right">
-        <a-button type="primary">登录</a-button>
+        <div  v-if="loginUserStore.loginUser.id">
+          <a-space>
+            <a-avator :src="loginUserStore.loginUser?.userAvatar">
+              {{ loginUserStore.loginUser?.userName??'无名' }}
+            </a-avator>
+          </a-space>
+        </div>
+        <div v-else>
+        <a-button type="primary" href="/user/login">登录</a-button>
+        </div>
       </div>
     </div>
   </div>

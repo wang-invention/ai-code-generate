@@ -27,6 +27,22 @@ export const menuItems: MenuProps['items'] = [
 ]
 
 const routes: RouteRecordRaw[] = [
+
+  {
+    path: '/user/login',
+    name: '用户登录',
+    component: () => import('../views/user/UserLoginPage.vue')
+  },
+  {
+    path: '/user/register',
+    name: '用户注册',
+    component: () => import('../views/user/UserRegisterPage.vue')
+  },
+  {
+    path: '/admin/userManage',
+    name: '用户管理',
+    component: () => import('../views/admin/UserManagePage.vue')
+  },
   {
     path: '/',
     name: 'Home',
