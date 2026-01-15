@@ -16,4 +16,9 @@ class AiCodeGeneratorFacadeTest {
         aiCodeGeneratorFacade.generateAndSaveCode("请生成一个HTML代码，内容是一个博客网站，代码在50行以内", CodeGenTypeEnum.HTML);
 
     }
+
+    @Test
+    void generateAndSaveCodeStream() {
+        aiCodeGeneratorFacade.generateAndSaveCodeStream("请生成一个HTML代码，内容是一个博客网站，代码在50行以内", CodeGenTypeEnum.HTML).subscribe(System.out::println);
+    }
 }
