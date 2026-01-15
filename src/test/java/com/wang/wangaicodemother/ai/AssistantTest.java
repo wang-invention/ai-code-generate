@@ -1,5 +1,6 @@
 package com.wang.wangaicodemother.ai;
 
+import com.wang.wangaicodemother.ai.model.HtmlCodeResult;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,7 +13,8 @@ class AssistantTest {
 
     @Test
     void generateHtmlCode() {
-        String s = assistant.generateHtmlCode("生成一个html页面，不超过50行");
+        HtmlCodeResult htmlCode = assistant.generateHtmlCode("请生成一个HTML代码，内容是：<h1>Hello World</h1>");
+        System.err.println(htmlCode);
     }
 
     @Test
