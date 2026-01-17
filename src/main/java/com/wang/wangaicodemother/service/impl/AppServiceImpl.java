@@ -4,6 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import com.wang.wangaicodemother.core.AiCodeGeneratorFacade;
+import com.wang.wangaicodemother.enums.CodeGenTypeEnum;
 import com.wang.wangaicodemother.exception.BusinessException;
 import com.wang.wangaicodemother.exception.ErrorCode;
 import com.wang.wangaicodemother.mapper.AppMapper;
@@ -15,6 +17,7 @@ import com.wang.wangaicodemother.model.vo.UserVO;
 import com.wang.wangaicodemother.service.AppService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +36,10 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     @Resource
     private UserServiceImpl userService;
+
+
+    @Resource
+    private AiCodeGeneratorFacade aiCodeGeneratorFacade;
 
     /**
      * 获取App信息和关联的用户信息
@@ -86,6 +93,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     /**
      * 将app列表转换为VO列表
+     *
      * @param appList
      * @return
      */
@@ -103,6 +111,28 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
             appVO.setUser(userVOMap.get(app.getUserId()));
             return appVO;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public Flux<String> chatToGenCode(String userMessage, String appId, User loginUser) {
+        if (appId == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "应用id不能为空");
+        }
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户信息不能为空");
+        }
+        //查询应用信息
+        App app = this.getById(appId);
+        if (app == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        }
+        if (!loginUser.getId().equals(app.getUserId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "用户没有权限,只能使用自己创建的应用");
+        }
+
+        String codeType = app.getCodeGenType();
+        CodeGenTypeEnum codeGenTypeEnum = CodeGenTypeEnum.getEnumByValue(codeType);
+        return aiCodeGeneratorFacade.generateAndSaveCodeStream(userMessage, codeGenTypeEnum, appId);
     }
 
 
