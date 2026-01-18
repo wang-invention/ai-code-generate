@@ -29,6 +29,10 @@ public class WebConfig implements WebMvcConfigurer {
                         "/swagger-resources",
                         "/swagger-resources/**",
 
+                        // ===== Knife4j =====
+                        "/doc.html",
+                        "/webjars/**",
+
                         // ===== 静态资源 =====
                         "/webjars/**",
                         "/favicon.ico",

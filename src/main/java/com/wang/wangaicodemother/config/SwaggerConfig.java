@@ -14,7 +14,7 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
-                .info(new Info().title("API文档").version("1.0"))
+                .info(new Info().title("Ai代码生成平台API文档").version("1.0"))
                 .components(new Components()
                         .addSecuritySchemes("BearerAuth",
                                 new SecurityScheme()
