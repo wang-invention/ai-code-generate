@@ -2,17 +2,20 @@ import axios from 'axios'
 import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/LoginUser'
 
-const myAxios = axios.create({
+const request = axios.create({
   baseURL: 'http://localhost:8123/api',
   timeout: 60000,
   withCredentials: true,
 })
 
-myAxios.interceptors.request.use(
+request.interceptors.request.use(
+
   function (config) {
+    console.log(11111111111111);
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+      console.log('Request with token:', config);
     }
     return config
   },
@@ -21,7 +24,7 @@ myAxios.interceptors.request.use(
   },
 )
 
-myAxios.interceptors.response.use(
+request.interceptors.response.use(
   function (response) {
     const { data } = response
     if (data.code === 40100) {
@@ -50,4 +53,4 @@ myAxios.interceptors.response.use(
   },
 )
 
-export default myAxios
+export default request

@@ -24,6 +24,11 @@ export const menuItems: MenuProps['items'] = [
     key: 'community',
     label: '社区',
     path: '/community'
+  },
+  {
+    key: 'user-manage',
+    label: '用户管理',
+    path: '/admin/userManage'
   }
 ]
 
@@ -87,6 +92,15 @@ router.beforeEach((to, from, next) => {
   // 如果用户已登录但访问登录/注册页面，跳转到首页
   if ((to.path === '/user/login' || to.path === '/user/register') && loginUserStore.isLogin) {
     next('/')
+    return
+  }
+
+  // 需要登录的页面列表
+  const requireAuthPages = ['/user/profile', '/user/profile/edit', '/admin/userManage']
+
+  // 如果访问需要登录的页面但用户未登录，跳转到登录页
+  if (requireAuthPages.includes(to.path) && !loginUserStore.isLogin) {
+    next(`/user/login?redirect=${encodeURIComponent(to.fullPath)}`)
     return
   }
 

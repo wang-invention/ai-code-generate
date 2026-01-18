@@ -8,6 +8,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
+@Slf4j
 public class JwtInterceptor implements HandlerInterceptor {
 
 
@@ -44,6 +46,12 @@ public class JwtInterceptor implements HandlerInterceptor {
         if (whiteList.stream().anyMatch(uri::startsWith)) {
             return true;
         }
+
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true; // 直接放行
+        }
+        log.info("method = {}", request.getMethod());
+        log.info("Authorization = {}", request.getHeader("Authorization"));
 
         String authHeader = request.getHeader("Authorization");
         if (StringUtils.isBlank(authHeader)) {

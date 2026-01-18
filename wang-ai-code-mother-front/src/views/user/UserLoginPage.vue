@@ -33,6 +33,9 @@ const handleLogin = async () => {
 
       if (loginUserVO.token) {
         localStorage.setItem('token', loginUserVO.token)
+        console.log('Token saved:', loginUserVO.token)
+      } else {
+        console.error('No token in response:', loginUserVO)
       }
 
       const redirect = (route.query.redirect as string) || '/'
@@ -41,6 +44,7 @@ const handleLogin = async () => {
       message.error(res.data.message || '登录失败')
     }
   } catch (error) {
+    console.error('Login error:', error)
     message.error('登录失败，请稍后重试')
   } finally {
     loading.value = false
