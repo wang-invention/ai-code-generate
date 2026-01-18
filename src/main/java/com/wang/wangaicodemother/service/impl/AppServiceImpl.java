@@ -171,7 +171,6 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         String sourceDir = AppConstant.CODE_OUTPUT_ROOT_DIR + File.separator + sourceDirName;
         //检查代码是否存在
         File file = new File(sourceDir);
-        System.err.println(sourceDir);
         if (!file.exists() || !file.isDirectory()) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "代码不存在");
         }
