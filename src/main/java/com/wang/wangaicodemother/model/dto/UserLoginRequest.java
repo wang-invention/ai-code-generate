@@ -15,10 +15,10 @@ public class UserLoginRequest implements Serializable {
     /**
      * 账号
      */
-    private String userAccount;
+    private String userAccount= "wang";
 
     /**
      * 密码
      */
-    private String userPassword;
+    private String userPassword="12345678";
 }

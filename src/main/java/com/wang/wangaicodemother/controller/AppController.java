@@ -15,10 +15,7 @@ import com.wang.wangaicodemother.enums.CodeGenTypeEnum;
 import com.wang.wangaicodemother.exception.BusinessException;
 import com.wang.wangaicodemother.exception.ErrorCode;
 import com.wang.wangaicodemother.exception.ThrowUtils;
-import com.wang.wangaicodemother.model.dto.AppAddRequest;
-import com.wang.wangaicodemother.model.dto.AppAdminUpdateRequest;
-import com.wang.wangaicodemother.model.dto.AppQueryRequest;
-import com.wang.wangaicodemother.model.dto.AppUpdateRequest;
+import com.wang.wangaicodemother.model.dto.*;
 import com.wang.wangaicodemother.model.entity.App;
 import com.wang.wangaicodemother.model.entity.User;
 import com.wang.wangaicodemother.model.vo.AppVO;
@@ -52,6 +49,36 @@ public class AppController {
     private UserService userService;
 
 
+    /**
+     * 应用部署
+     *
+     * @param appDeployRequest 部署请求
+     * @param request          请求
+     * @return 部署 URL
+     */
+    @PostMapping("/deploy")
+    public BaseResponse<String> deployApp(@RequestBody AppDeployRequest appDeployRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(appDeployRequest == null, ErrorCode.PARAMS_ERROR);
+        Long appId = appDeployRequest.getAppId();
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 ID 不能为空");
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+        // 调用服务部署应用
+        String deployUrl = appService.deployApp(appId, loginUser);
+        return ResultUtils.success(deployUrl);
+    }
+
+
+    /**
+     * 、
+     * 聊天生成代码
+     *
+     * @param appId
+     * @param message
+     * @param request
+     * @return
+     */
+
     @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId,
                                                        @RequestParam String message,
@@ -62,7 +89,7 @@ public class AppController {
         // 获取当前登录用户
         User loginUser = userService.getLoginUser(request);
         // 调用服务生成代码（流式）
-        Flux<String> contentFlux = appService.chatToGenCode(String.valueOf(appId), message, loginUser);
+        Flux<String> contentFlux = appService.chatToGenCode(message, String.valueOf(appId), loginUser);
         // 转换为 ServerSentEvent 格式
         return contentFlux
                 .map(chunk -> {
@@ -77,7 +104,6 @@ public class AppController {
                         .data("")
                         .build()));
     }
-
 
     /**
      * 管理员根据 id 获取应用详情
