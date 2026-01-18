@@ -31,7 +31,7 @@ public abstract class CodeFileSaveTemplate<T> {
 
 
     private String buildUniqueDirPath(String appId) {
-        String uniqueFileName = StrUtil.format("{}_{}",getCodeType().getValue(), IdUtil.getSnowflakeNextIdStr());
+        String uniqueFileName = StrUtil.format("{}_{}",getCodeType().getValue(), appId);
         String dirPath=CODE_FILE_PATH+File.separator+uniqueFileName;
         FileUtil.mkdir(dirPath);
         return dirPath;
