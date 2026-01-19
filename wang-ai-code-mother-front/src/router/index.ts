@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import type { MenuProps } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/LoginUser'
 
-// 菜单项配置
-export const menuItems: MenuProps['items'] = [
+const menuItems: MenuProps['items'] = [
   {
     key: 'home',
     label: '首页',
@@ -29,11 +29,15 @@ export const menuItems: MenuProps['items'] = [
     key: 'user-manage',
     label: '用户管理',
     path: '/admin/userManage'
+  },
+  {
+    key: 'app-manage',
+    label: '应用管理',
+    path: '/admin/appManage'
   }
 ]
 
 const routes: RouteRecordRaw[] = [
-
   {
     path: '/user/login',
     name: '用户登录',
@@ -58,6 +62,21 @@ const routes: RouteRecordRaw[] = [
     path: '/admin/userManage',
     name: '用户管理',
     component: () => import('../views/admin/UserManagePage.vue')
+  },
+  {
+    path: '/admin/appManage',
+    name: '应用管理',
+    component: () => import('../views/admin/AppManagePage.vue')
+  },
+  {
+    path: '/app/chat/:id',
+    name: '应用对话',
+    component: () => import('../views/app/AppChatPage.vue')
+  },
+  {
+    path: '/app/edit/:id',
+    name: '编辑应用',
+    component: () => import('../views/app/AppEditPage.vue')
   },
   {
     path: '/',
@@ -89,18 +108,21 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const loginUserStore = useLoginUserStore()
 
-  // 如果用户已登录但访问登录/注册页面，跳转到首页
   if ((to.path === '/user/login' || to.path === '/user/register') && loginUserStore.isLogin) {
     next('/')
     return
   }
 
-  // 需要登录的页面列表
-  const requireAuthPages = ['/user/profile', '/user/profile/edit', '/admin/userManage']
+  const requireAuthPages = ['/user/profile', '/user/profile/edit', '/admin/userManage', '/admin/appManage']
 
-  // 如果访问需要登录的页面但用户未登录，跳转到登录页
   if (requireAuthPages.includes(to.path) && !loginUserStore.isLogin) {
     next(`/user/login?redirect=${encodeURIComponent(to.fullPath)}`)
+    return
+  }
+
+  if (to.path === '/admin/appManage' && loginUserStore.loginUser.userRole !== 'admin') {
+    message.error('您没有权限访问此页面')
+    next('/')
     return
   }
 
@@ -108,3 +130,4 @@ router.beforeEach((to, from, next) => {
 })
 
 export default router
+export { menuItems }

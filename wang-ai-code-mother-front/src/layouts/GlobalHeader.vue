@@ -15,14 +15,25 @@ router.isReady().then(() => {
   isReady.value = true
 })
 
+const filteredMenuItems = computed(() => {
+  if (!menuItems) return []
+  
+  return menuItems.filter(item => {
+    if (item.key === 'app-manage') {
+      return loginUserStore.loginUser.userRole === 'admin'
+    }
+    return true
+  })
+})
+
 const selectedKeys = computed(() => {
   if (!isReady.value) return []
-  const menuItem = menuItems?.find(item => 'path' in item && item.path === route.path)
+  const menuItem = filteredMenuItems.value?.find(item => 'path' in item && item.path === route.path)
   return menuItem ? [menuItem.key as string] : []
 })
 
 const handleMenuClick = ({ key }: { key: string }) => {
-  const menuItem = menuItems?.find(item => item?.key === key)
+  const menuItem = filteredMenuItems.value?.find(item => item?.key === key)
   if (menuItem && 'path' in menuItem && menuItem.path) {
     router.push(menuItem.path as string)
   }
@@ -77,7 +88,7 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
         <a-menu
           v-if="isReady"
           mode="horizontal"
-          :items="menuItems"
+          :items="filteredMenuItems"
           :selected-keys="selectedKeys"
           class="header-menu"
           @select="handleMenuClick"
