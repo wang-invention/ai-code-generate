@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, computed } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import {
   SearchOutlined,
@@ -7,7 +7,9 @@ import {
   EditOutlined,
   DeleteOutlined,
   StarOutlined,
-  StarFilled
+  StarFilled,
+  FilterOutlined,
+  DownOutlined
 } from '@ant-design/icons-vue'
 import {
   listAppVoByPageByAdmin,
@@ -26,10 +28,14 @@ const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
 
+const selectedRowKeys = ref<string[]>([])
+const selectedRows = ref<API.AppVO[]>([])
+
 const searchForm = reactive({
   appName: '',
   codeGenType: '',
-  userId: undefined as number | undefined
+  userId: undefined as string | undefined,
+  priority: undefined as number | undefined
 })
 
 const modalVisible = ref(false)
@@ -37,11 +43,22 @@ const modalTitle = ref('编辑应用')
 const modalLoading = ref(false)
 
 const appForm = reactive({
-  id: undefined as number | undefined,
+  id: undefined as string | undefined,
   appName: '',
   cover: '',
   priority: 0
 })
+
+const codeGenTypeOptions = [
+  { label: 'HTML 单文件', value: 'HTML' },
+  { label: '多文件项目', value: 'MULTI_FILE' }
+]
+
+const priorityOptions = [
+  { label: '全部', value: undefined },
+  { label: '精选', value: 99 },
+  { label: '普通', value: 0 }
+]
 
 const columns = [
   {
@@ -65,7 +82,8 @@ const columns = [
     title: '初始提示词',
     dataIndex: 'initPrompt',
     key: 'initPrompt',
-    ellipsis: true
+    ellipsis: true,
+    width: 200
   },
   {
     title: '代码生成类型',
@@ -77,7 +95,11 @@ const columns = [
     title: '优先级',
     dataIndex: 'priority',
     key: 'priority',
-    width: 80
+    width: 80,
+    filters: [
+      { text: '精选', value: 99 },
+      { text: '普通', value: 0 }
+    ]
   },
   {
     title: '创建用户',
@@ -89,7 +111,8 @@ const columns = [
     title: '创建时间',
     dataIndex: 'createTime',
     key: 'createTime',
-    width: 180
+    width: 180,
+    sorter: true
   },
   {
     title: '操作',
@@ -99,6 +122,20 @@ const columns = [
   }
 ]
 
+const rowSelection = computed(() => {
+  return {
+    selectedRowKeys: selectedRowKeys.value,
+    onChange: (selectedKeys: number[], selectedRows: API.AppVO[]) => {
+      selectedRowKeys.value = selectedKeys
+      selectedRows.value = selectedRows
+    }
+  }
+})
+
+const hasSelection = computed(() => {
+  return selectedRowKeys.value.length > 0
+})
+
 const fetchAppList = async () => {
   loading.value = true
   try {
@@ -107,7 +144,8 @@ const fetchAppList = async () => {
       pageSize: pageSize.value,
       appName: searchForm.appName || undefined,
       codeGenType: searchForm.codeGenType || undefined,
-      userId: searchForm.userId || undefined
+      userId: searchForm.userId || undefined,
+      priority: searchForm.priority || undefined
     })
     if (res.data.code === 0 && res.data.data) {
       tableData.value = res.data.data.records || []
@@ -131,6 +169,7 @@ const handleReset = () => {
   searchForm.appName = ''
   searchForm.codeGenType = ''
   searchForm.userId = undefined
+  searchForm.priority = undefined
   currentPage.value = 1
   fetchAppList()
 }
@@ -138,6 +177,15 @@ const handleReset = () => {
 const handlePageChange = (page: number, size: number) => {
   currentPage.value = page
   pageSize.value = size
+  fetchAppList()
+}
+
+const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+  if (filters.priority) {
+    searchForm.priority = filters.priority[0]
+  } else {
+    searchForm.priority = undefined
+  }
   fetchAppList()
 }
 
@@ -289,6 +337,101 @@ const handleRemoveFeatured = async (record: API.AppVO) => {
   })
 }
 
+const handleBatchDelete = () => {
+  if (selectedRowKeys.value.length === 0) {
+    message.warning('请选择要删除的应用')
+    return
+  }
+
+  Modal.confirm({
+    title: '批量删除',
+    content: `确定要删除选中的 ${selectedRowKeys.value.length} 个应用吗？此操作不可恢复。`,
+    okText: '确定',
+    cancelText: '取消',
+    okButtonProps: { danger: true },
+    onOk: async () => {
+      try {
+        const promises = selectedRows.value.map(row => 
+          deleteAppByAdmin({ id: row.id })
+        )
+        await Promise.all(promises)
+        message.success(`成功删除 ${selectedRowKeys.value.length} 个应用`)
+        selectedRowKeys.value = []
+        selectedRows.value = []
+        fetchAppList()
+      } catch (error) {
+        message.error('批量删除失败，请稍后重试')
+      }
+    }
+  })
+}
+
+const handleBatchSetFeatured = () => {
+  if (selectedRowKeys.value.length === 0) {
+    message.warning('请选择要设为精选的应用')
+    return
+  }
+
+  Modal.confirm({
+    title: '批量设为精选',
+    content: `确定要将选中的 ${selectedRowKeys.value.length} 个应用设为精选吗？`,
+    okText: '确定',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        const promises = selectedRows.value.map(row => 
+          updateAppByAdmin({
+            id: row.id,
+            appName: row.appName,
+            cover: row.cover,
+            priority: 99
+          })
+        )
+        await Promise.all(promises)
+        message.success(`成功将 ${selectedRowKeys.value.length} 个应用设为精选`)
+        selectedRowKeys.value = []
+        selectedRows.value = []
+        fetchAppList()
+      } catch (error) {
+        message.error('批量设置失败，请稍后重试')
+      }
+    }
+  })
+}
+
+const handleBatchRemoveFeatured = () => {
+  if (selectedRowKeys.value.length === 0) {
+    message.warning('请选择要取消精选的应用')
+    return
+  }
+
+  Modal.confirm({
+    title: '批量取消精选',
+    content: `确定要取消选中的 ${selectedRowKeys.value.length} 个应用的精选状态吗？`,
+    okText: '确定',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        const promises = selectedRows.value.map(row => 
+          updateAppByAdmin({
+            id: row.id,
+            appName: row.appName,
+            cover: row.cover,
+            priority: 0
+          })
+        )
+        await Promise.all(promises)
+        message.success(`成功取消 ${selectedRowKeys.value.length} 个应用的精选状态`)
+        selectedRowKeys.value = []
+        selectedRows.value = []
+        fetchAppList()
+      } catch (error) {
+        message.error('批量取消失败，请稍后重试')
+      }
+    }
+  })
+}
+
 onMounted(() => {
   fetchAppList()
 })
@@ -296,10 +439,11 @@ onMounted(() => {
 
 <template>
   <div class="app-manage-container">
-    <a-card :bordered="false">
+    <a-card :bordered="false" class="manage-card">
       <template #title>
         <div class="card-title">
           <span>应用管理</span>
+          <a-tag color="blue">{{ total }}</a-tag>
         </div>
       </template>
 
@@ -311,15 +455,42 @@ onMounted(() => {
               placeholder="请输入应用名称"
               allow-clear
               style="width: 200px"
-            />
+            >
+              <template #prefix>
+                <SearchOutlined />
+              </template>
+            </a-input>
           </a-form-item>
-          <a-form-item label="代码生成类型">
-            <a-input
+          <a-form-item label="代码类型">
+            <a-select
               v-model:value="searchForm.codeGenType"
-              placeholder="请输入代码生成类型"
+              placeholder="请选择代码类型"
               allow-clear
-              style="width: 200px"
-            />
+              style="width: 150px"
+            >
+              <a-select-option
+                v-for="option in codeGenTypeOptions"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item label="优先级">
+            <a-select
+              v-model:value="searchForm.priority"
+              placeholder="请选择优先级"
+              style="width: 120px"
+            >
+              <a-select-option
+                v-for="option in priorityOptions"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </a-select-option>
+            </a-select>
           </a-form-item>
           <a-form-item>
             <a-space>
@@ -340,9 +511,32 @@ onMounted(() => {
         </a-form>
       </div>
 
+      <div v-if="hasSelection" class="batch-actions">
+        <a-space>
+          <a-button type="primary" @click="handleBatchSetFeatured">
+            <template #icon>
+              <StarOutlined />
+            </template>
+            批量设为精选
+          </a-button>
+          <a-button @click="handleBatchRemoveFeatured">
+            <template #icon>
+              <StarFilled />
+            </template>
+            批量取消精选
+          </a-button>
+          <a-button danger @click="handleBatchDelete">
+            <template #icon>
+              <DeleteOutlined />
+            </template>
+            批量删除
+          </a-button>
+        </a-space>
+      </div>
+
       <a-table
         :columns="columns"
-        :data-source="tableData"
+        :data-source="loading ? [] : tableData"
         :loading="loading"
         :pagination="{
           current: currentPage,
@@ -353,8 +547,10 @@ onMounted(() => {
           showTotal: (total) => `共 ${total} 条`,
           onChange: handlePageChange
         }"
-        :scroll="{ x: 1200 }"
+        :row-selection="loading ? null : rowSelection"
+        :scroll="{ x: 1400 }"
         row-key="id"
+        @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'cover'">
@@ -416,6 +612,11 @@ onMounted(() => {
             </a-space>
           </template>
         </template>
+        <template #emptyText>
+          <a-empty description="暂无应用数据">
+            <a-button type="primary" @click="handleReset">重置筛选</a-button>
+          </a-empty>
+        </template>
       </a-table>
     </a-card>
 
@@ -458,7 +659,25 @@ onMounted(() => {
   min-height: 100vh;
 }
 
+.manage-card {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   font-size: 20px;
   font-weight: 600;
   color: #333;
@@ -466,20 +685,75 @@ onMounted(() => {
 
 .search-form {
   margin-bottom: 16px;
-  padding: 16px;
+  padding: 20px;
   background: #fafafa;
-  border-radius: 4px;
+  border-radius: 12px;
+}
+
+.batch-actions {
+  margin-bottom: 16px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 :deep(.ant-card-head-title) {
-  padding: 16px 0;
+  padding: 20px 0;
 }
 
 :deep(.ant-table) {
   font-size: 14px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.ant-table-thead > tr > th) {
+  background: #fafafa;
+  font-weight: 600;
+  color: #333;
+}
+
+:deep(.ant-table-tbody > tr:hover > td) {
+  background: #f5f5f5;
+}
+
+:deep(.ant-table-row-selected) {
+  background: #e6f7ff !important;
 }
 
 :deep(.ant-btn-link) {
   padding: 0 4px;
+}
+
+:deep(.ant-input),
+:deep(.ant-select-selector) {
+  border-radius: 8px;
+}
+
+:deep(.ant-btn) {
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+:deep(.ant-btn:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+:deep(.ant-tag) {
+  border-radius: 12px;
+  font-weight: 500;
 }
 </style>

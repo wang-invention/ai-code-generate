@@ -47,6 +47,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        System.out.println("Static preview dir = " + PREVIEW_ROOT_DIR);
 
         registry.addResourceHandler("/static/**")
                 .addResourceLocations("file:" + PREVIEW_ROOT_DIR)

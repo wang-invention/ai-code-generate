@@ -11,12 +11,12 @@ const route = useRoute()
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
 
-const appId = ref<number>(Number(route.params.id))
+const appId = ref<string>(String(route.params.id))
 const loading = ref(false)
 const saving = ref(false)
 
 const appForm = reactive({
-  id: undefined as number | undefined,
+  id: undefined as string | undefined,
   appName: '',
   cover: ''
 })

@@ -252,6 +252,7 @@ public class AppController {
     public BaseResponse<AppVO> getAppVOById(long id) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         // 查询数据库
+        System.err.println("id: " + id);
         App app = appService.getById(id);
         ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
         // 获取封装类（包含用户信息）

@@ -10,7 +10,7 @@ const route = useRoute()
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
 
-const appId = ref<number>(Number(route.params.id))
+const appId = ref<string>(String(route.params.id))
 const appInfo = ref<API.AppVO | null>(null)
 const loading = ref(false)
 
@@ -83,20 +83,32 @@ const sendInitialMessage = async (prompt: string) => {
       const chunk = decoder.decode(value)
       const lines = chunk.split('\n')
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6)
-          if (data === '[DONE]') {
-            showPreview.value = true
-            previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/`
-            break
-          }
-          if (data && data !== 'null') {
-            messages.value[messages.value.length - 1].content += data
-            scrollToBottom()
-          }
-        }
-      }
+      let currentEvent = 'message'
+
+for (const line of lines) {
+  if (line.startsWith('event:')) {
+    currentEvent = line.replace(/^event:\s*/, '')
+    continue
+  }
+
+  if (!line.startsWith('data:')) continue
+
+  const data = line.replace(/^data:\s*/, '')
+
+  if (currentEvent === 'done') {
+    showPreview.value = true
+    //http://localhost:8123/api/static/html_2011763874621632512/index.html
+    previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/index.html`
+    break
+  }
+
+  if (data && data !== 'null') {
+    const json = JSON.parse(data)
+    messages.value[messages.value.length - 1].content += json.d
+    scrollToBottom()
+  }
+}
+
     }
   } catch (error) {
     message.error('对话失败，请稍后重试')

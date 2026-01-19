@@ -165,7 +165,7 @@ const handleGoodAppsPageChange = (page: number) => {
   fetchGoodApps()
 }
 
-const goToAppChat = (appId: number) => {
+const goToAppChat = (appId: string) => {
   router.push(`/app/chat/${appId}`)
 }
 
@@ -278,7 +278,20 @@ onMounted(() => {
 
         <div v-if="loginUserStore.isLogin" class="apps-list">
           <a-spin :spinning="myAppsLoading">
-            <div v-if="myApps.length === 0 && !myAppsLoading" class="empty-state">
+            <div v-if="myAppsLoading" class="skeleton-grid">
+              <a-row :gutter="[16, 16]">
+                <a-col v-for="i in 8" :key="i" :xs="24" :sm="12" :md="8" :lg="6">
+                  <a-card>
+                    <a-skeleton active :loading="true">
+                      <a-skeleton-image />
+                      <a-skeleton-input style="width: 100%; margin-top: 12px;" />
+                      <a-skeleton-input style="width: 100%; margin-top: 8px;" size="small" />
+                    </a-skeleton>
+                  </a-card>
+                </a-col>
+              </a-row>
+            </div>
+            <div v-else-if="myApps.length === 0" class="empty-state">
               <a-empty description="暂无应用，快来创建一个吧！">
                 <a-button type="primary" @click="promptInput = examplePrompts[0].prompt">
                   从示例开始
@@ -382,7 +395,20 @@ onMounted(() => {
 
         <div class="apps-list">
           <a-spin :spinning="goodAppsLoading">
-            <div v-if="goodApps.length === 0 && !goodAppsLoading" class="empty-state">
+            <div v-if="goodAppsLoading" class="skeleton-grid">
+              <a-row :gutter="[16, 16]">
+                <a-col v-for="i in 8" :key="i" :xs="24" :sm="12" :md="8" :lg="6">
+                  <a-card>
+                    <a-skeleton active :loading="true">
+                      <a-skeleton-image />
+                      <a-skeleton-input style="width: 100%; margin-top: 12px;" />
+                      <a-skeleton-input style="width: 100%; margin-top: 8px;" size="small" />
+                    </a-skeleton>
+                  </a-card>
+                </a-col>
+              </a-row>
+            </div>
+            <div v-else-if="goodApps.length === 0" class="empty-state">
               <a-empty description="暂无精选应用" />
             </div>
             <a-row v-else :gutter="[16, 16]">
@@ -459,6 +485,18 @@ onMounted(() => {
   color: white;
   position: relative;
   overflow: hidden;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero-section::before {
@@ -526,6 +564,7 @@ onMounted(() => {
 
 .prompt-section {
   margin-bottom: 48px;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
 }
 
 .prompt-card {
@@ -637,6 +676,7 @@ onMounted(() => {
 .my-apps-section,
 .good-apps-section {
   margin-bottom: 48px;
+  animation: fadeInUp 0.8s ease-out 0.4s both;
 }
 
 .apps-card {
@@ -662,6 +702,16 @@ onMounted(() => {
   transition: all 0.3s;
   border-radius: 12px;
   overflow: hidden;
+  animation: fadeIn 0.6s ease-out both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .app-card:hover {
