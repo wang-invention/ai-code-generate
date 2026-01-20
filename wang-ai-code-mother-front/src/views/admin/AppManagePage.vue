@@ -693,7 +693,7 @@ onMounted(() => {
 .batch-actions {
   margin-bottom: 16px;
   padding: 12px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1890ff;
   border-radius: 12px;
   animation: slideIn 0.3s ease-out;
 }

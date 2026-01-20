@@ -2,7 +2,7 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { PlusOutlined, SearchOutlined, ReloadOutlined, ThunderboltOutlined, BulbOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, SearchOutlined, ReloadOutlined, ThunderboltOutlined, BulbOutlined, ShoppingOutlined, FileTextOutlined, BankOutlined, BarChartOutlined, StarOutlined } from '@ant-design/icons-vue'
 import { addApp, listMyAppVoByPage, listGoodAppVoByPage } from '@/api/appController'
 import { useLoginUserStore } from '@/stores/LoginUser'
 
@@ -14,25 +14,25 @@ const createLoading = ref(false)
 
 const examplePrompts = [
   {
-    icon: '🛒',
+    icon: ShoppingOutlined,
     title: '电商网站',
     desc: '创建一个现代化的电商网站，包含商品展示、购物车、订单管理等功能',
     prompt: '创建一个现代化的电商网站，包含商品展示、购物车、订单管理等功能'
   },
   {
-    icon: '📝',
+    icon: FileTextOutlined,
     title: '个人博客',
     desc: '设计一个简洁优雅的个人博客，支持文章发布、评论、标签分类',
     prompt: '设计一个简洁优雅的个人博客，支持文章发布、评论、标签分类'
   },
   {
-    icon: '🏢',
+    icon: BankOutlined,
     title: '企业官网',
     desc: '搭建一个专业的企业官网，包含公司介绍、产品展示、联系我们',
     prompt: '搭建一个专业的企业官网，包含公司介绍、产品展示、联系我们'
   },
   {
-    icon: '📊',
+    icon: BarChartOutlined,
     title: '数据仪表盘',
     desc: '开发一个数据可视化仪表盘，展示关键指标和图表分析',
     prompt: '开发一个数据可视化仪表盘，展示关键指标和图表分析'
@@ -230,7 +230,9 @@ onMounted(() => {
               class="example-card"
               @click="handleExampleClick(example.prompt)"
             >
-              <div class="example-icon">{{ example.icon }}</div>
+              <div class="example-icon">
+                <component :is="example.icon" />
+              </div>
               <div class="example-content">
                 <div class="example-title">{{ example.title }}</div>
                 <div class="example-desc">{{ example.desc }}</div>
@@ -436,7 +438,8 @@ onMounted(() => {
                         <span>{{ app.appName?.charAt(0) || 'A' }}</span>
                       </div>
                       <div class="featured-badge">
-                        <span>⭐ 精选</span>
+                        <StarOutlined />
+                        <span>精选</span>
                       </div>
                     </div>
                   </template>
@@ -480,7 +483,7 @@ onMounted(() => {
   text-align: center;
   margin-bottom: 48px;
   padding: 60px 40px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1890ff;
   border-radius: 24px;
   color: white;
   position: relative;
@@ -546,7 +549,7 @@ onMounted(() => {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #fff 0%, #ffd700 100%);
+  background: #fff;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -600,15 +603,15 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 600;
   border-radius: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1890ff;
   border: none;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
   transition: all 0.3s;
 }
 
 .create-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 6px 16px rgba(24, 144, 255, 0.5);
 }
 
 .examples-section {
@@ -743,7 +746,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1890ff;
   color: white;
   font-size: 56px;
   font-weight: 700;
@@ -753,13 +756,13 @@ onMounted(() => {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%);
+  background: #ff6b6b;
   color: white;
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
 }
 
 .app-desc {

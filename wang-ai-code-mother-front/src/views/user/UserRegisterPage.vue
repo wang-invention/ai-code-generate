@@ -166,7 +166,7 @@ const goToLogin = () => {
 .register-header h1 {
   font-size: 32px;
   margin-bottom: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1890ff;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -206,14 +206,14 @@ const goToLogin = () => {
   border-radius: 8px;
   font-size: 16px;
   font-weight: 500;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1890ff;
   border: none;
   transition: all 0.3s;
 }
 
 :deep(.ant-btn-primary:hover) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 20px rgba(24, 144, 255, 0.4);
 }
 
 :deep(.ant-btn-primary:active) {
@@ -228,7 +228,7 @@ const goToLogin = () => {
 }
 
 .register-footer a {
-  color: #667eea;
+  color: #1890ff;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s;

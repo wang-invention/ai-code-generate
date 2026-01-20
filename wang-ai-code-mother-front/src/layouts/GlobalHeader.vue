@@ -155,7 +155,7 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
 .title {
   font-size: 20px;
   font-weight: bold;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1890ff;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -175,7 +175,7 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
   cursor: pointer;
   transition: all 0.3s ease;
   border: 2px solid transparent;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1890ff;
   color: #fff;
   font-weight: 600;
   font-size: 16px;
