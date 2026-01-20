@@ -106,6 +106,7 @@ for (const line of lines) {
     const json = JSON.parse(data)
     messages.value[messages.value.length - 1].content += json.d
     scrollToBottom()
+    scrollToBottomImmediate()
   }
 }
 
@@ -184,6 +185,7 @@ const handleSendMessage = async () => {
           if (data && data !== 'null') {
             messages.value[messages.value.length - 1].content += data
             scrollToBottom()
+            scrollToBottomImmediate()
           }
         }
       }
@@ -202,6 +204,12 @@ const scrollToBottom = () => {
       messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
     }
   })
+}
+
+const scrollToBottomImmediate = () => {
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  }
 }
 
 const handleDeploy = async () => {
@@ -388,6 +396,7 @@ onMounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  scroll-behavior: smooth;
 }
 
 .message-item {
