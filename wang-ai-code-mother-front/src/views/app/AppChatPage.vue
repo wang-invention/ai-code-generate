@@ -37,6 +37,7 @@ const fetchAppInfo = async () => {
         })
         await sendInitialMessage(appInfo.value.initPrompt)
       }
+      scrollToBottom()
     } else {
       message.error(res.data.message || '获取应用信息失败')
     }
@@ -99,13 +100,12 @@ for (const line of lines) {
     showPreview.value = true
     //http://localhost:8123/api/static/html_2011763874621632512/index.html
     previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/index.html`
-    break
+    continue
   }
 
   if (data && data !== 'null') {
     const json = JSON.parse(data)
     messages.value[messages.value.length - 1].content += json.d
-    scrollToBottom()
     scrollToBottomImmediate()
   }
 }
@@ -138,6 +138,7 @@ const handleSendMessage = async () => {
   })
   inputMessage.value = ''
   scrollToBottom()
+  scrollToBottomImmediate()
 
   sending.value = true
   try {
@@ -174,18 +175,36 @@ const handleSendMessage = async () => {
       const chunk = decoder.decode(value)
       const lines = chunk.split('\n')
 
+      let currentEvent = 'message'
+
       for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6)
-          if (data === '[DONE]') {
-            showPreview.value = true
-            previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/`
-            break
-          }
-          if (data && data !== 'null') {
-            messages.value[messages.value.length - 1].content += data
-            scrollToBottom()
-            scrollToBottomImmediate()
+        if (line.startsWith('event:')) {
+          currentEvent = line.replace(/^event:\s*/, '')
+          continue
+        }
+
+        if (!line.startsWith('data:')) continue
+
+        const data = line.replace(/^data:\s*/, '')
+
+        if (currentEvent === 'done') {
+          showPreview.value = true
+          previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/index.html`
+          continue
+        }
+
+        if (data && data !== 'null') {
+          try {
+            const json = JSON.parse(data)
+            if (json.d) {
+              messages.value[messages.value.length - 1].content += json.d
+              scrollToBottomImmediate()
+            }
+          } catch (e) {
+            if (data !== '[DONE]') {
+              messages.value[messages.value.length - 1].content += data
+              scrollToBottomImmediate()
+            }
           }
         }
       }
@@ -242,6 +261,9 @@ const goBack = () => {
 
 onMounted(() => {
   fetchAppInfo()
+  setTimeout(() => {
+    scrollToBottom()
+  }, 500)
 })
 </script>
 
@@ -249,7 +271,7 @@ onMounted(() => {
   <div class="app-chat-container">
     <div class="chat-header">
       <div class="header-left">
-        <a-button type="text" @click="goBack">
+        <a-button type="text" @click="goBack" class="back-button">
           <template #icon>
             <ArrowLeftOutlined />
           </template>
@@ -261,6 +283,7 @@ onMounted(() => {
           type="primary"
           :loading="deployLoading"
           @click="handleDeploy"
+          class="deploy-button"
         >
           <template #icon>
             <RocketOutlined />
@@ -308,9 +331,10 @@ onMounted(() => {
             size="large"
             :loading="sending"
             @search="handleSendMessage"
+            class="message-input"
           >
             <template #enterButton>
-              <a-button type="primary" size="large" :loading="sending">
+              <a-button type="primary" size="large" :loading="sending" class="send-button">
                 <template #icon>
                   <SendOutlined />
                 </template>
@@ -346,8 +370,8 @@ onMounted(() => {
 .app-chat-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 64px - 60px);
-  overflow: hidden;
+  min-height: calc(100vh - 64px);
+  background: #f7f8fa;
 }
 
 .chat-header {
@@ -355,8 +379,9 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  background: #ffffff;
+  border-bottom: 1px solid #e8e8e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .header-left {
@@ -365,17 +390,30 @@ onMounted(() => {
   gap: 12px;
 }
 
+.back-button {
+  color: #666;
+  font-size: 16px;
+}
+
 .app-name {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
   color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .header-right {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.deploy-button {
+  background: #1890ff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 .chat-content {
@@ -385,11 +423,13 @@ onMounted(() => {
 }
 
 .chat-section {
-  flex: 1;
+  flex: 3;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #f0f0f0;
-  background: #f5f5f5;
+  background: #ffffff;
+  border-right: 1px solid #e8e8e8;
+  height: calc(100vh - 128px);
+  overflow: hidden;
 }
 
 .messages-container {
@@ -397,11 +437,34 @@ onMounted(() => {
   overflow-y: auto;
   padding: 24px;
   scroll-behavior: smooth;
+  background: #ffffff;
+  scrollbar-width: thin;
+  scrollbar-color: #e0e0e0 #f5f5f5;
+  max-height: calc(100vh - 220px);
+}
+
+.messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 3px;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+  border-radius: 3px;
+}
+
+.messages-container::-webkit-scrollbar-thumb:hover {
+  background: #bdbdbd;
 }
 
 .message-item {
   display: flex;
   margin-bottom: 24px;
+  gap: 12px;
 }
 
 .user-message {
@@ -414,38 +477,51 @@ onMounted(() => {
 
 .message-content {
   max-width: 70%;
-}
-
-.user-message .message-content {
-  background: #1890ff;
-  color: white;
-  border-radius: 12px 12px 0 12px;
-  padding: 12px 16px;
-}
-
-.assistant-message .message-content {
-  background: white;
-  color: #333;
-  border-radius: 12px 12px 12px 0;
-  padding: 12px 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .message-role {
   font-size: 12px;
+  font-weight: 600;
+  color: #999;
   margin-bottom: 4px;
-  opacity: 0.8;
 }
 
 .user-message .message-role {
   text-align: right;
+  color: #1890ff;
+}
+
+.assistant-message .message-role {
+  text-align: left;
+  color: #fa8c16;
 }
 
 .message-text {
-  font-size: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
   line-height: 1.6;
+  font-size: 14px;
+  word-wrap: break-word;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  min-height: 40px;
+}
+
+.user-message .message-text {
+  background: #e6f7ff;
+  color: #1890ff;
+  border-bottom-right-radius: 4px;
+}
+
+.assistant-message .message-text {
+  background: #fafafa;
+  color: #333;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .typing {
@@ -486,15 +562,34 @@ onMounted(() => {
 
 .input-section {
   padding: 16px 24px;
-  background: white;
-  border-top: 1px solid #f0f0f0;
+  background: #ffffff;
+  border-top: 1px solid #e8e8e8;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.message-input {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.send-button {
+  border-radius: 0 12px 12px 0;
+  background: #1890ff;
+  border: none;
+  font-weight: 600;
 }
 
 .preview-section {
-  flex: 1;
+  flex: 2;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: #ffffff;
+  border-left: 1px solid #e8e8e8;
+  height: calc(100vh - 128px);
+  overflow: hidden;
 }
 
 .preview-container {
@@ -505,7 +600,8 @@ onMounted(() => {
 
 .preview-header {
   padding: 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
+  background: #ffffff;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .preview-header h3 {
@@ -518,12 +614,14 @@ onMounted(() => {
 .preview-iframe {
   flex: 1;
   overflow: hidden;
+  padding: 16px;
 }
 
 .preview-frame {
   width: 100%;
   height: 100%;
-  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .preview-placeholder {
@@ -531,42 +629,24 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-}
-
-:deep(.ant-input-search) {
-  width: 100%;
-}
-
-:deep(.ant-input-search-button) {
-  height: 40px;
-}
-
-:deep(.ant-input) {
-  height: 40px;
-}
-
-:deep(.ant-btn) {
-  height: 40px;
+  padding: 40px;
 }
 
 @media (max-width: 768px) {
   .chat-content {
     flex-direction: column;
   }
-
+  
   .chat-section {
     flex: 1;
     border-right: none;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #e8e8e8;
   }
-
+  
   .preview-section {
-    display: none;
-  }
-
-  .message-content {
-    max-width: 85%;
+    flex: 1;
+    border-left: none;
+    border-top: 1px solid #e8e8e8;
   }
 }
 </style>
