@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { SendOutlined, RocketOutlined, ArrowLeftOutlined } from '@ant-design/icons-vue'
 import { getAppVoById, deployApp } from '@/api/appController'
 import { useLoginUserStore } from '@/stores/LoginUser'
-
+import { marked } from 'marked' 
 const route = useRoute()
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
@@ -18,6 +18,10 @@ const messages = ref<Array<{ role: 'user' | 'assistant'; content: string }>>([])
 const inputMessage = ref('')
 const sending = ref(false)
 const messagesContainer = ref<HTMLElement | null>(null)
+
+const renderMarkdown = (content: string) => {
+  return marked.parse(content)
+}
 
 const showPreview = ref(false)
 const previewUrl = ref('')
@@ -109,6 +113,7 @@ for (const line of lines) {
     scrollToBottomImmediate()
   }
 }
+
 
     }
   } catch (error) {
@@ -306,8 +311,7 @@ onMounted(() => {
                 <div class="message-role">
                   {{ msg.role === 'user' ? '你' : 'AI' }}
                 </div>
-                <div class="message-text">
-                  {{ msg.content }}
+                <div class="message-text" v-html="renderMarkdown(msg.content)">
                 </div>
               </div>
             </div>
@@ -509,6 +513,60 @@ onMounted(() => {
   overflow-wrap: break-word;
   word-break: break-all;
   min-height: 40px;
+}
+
+.message-text pre {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.message-text code {
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.message-text h1, .message-text h2, .message-text h3, .message-text h4, .message-text h5, .message-text h6 {
+  margin: 12px 0;
+  font-weight: 600;
+}
+
+.message-text ul, .message-text ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.message-text li {
+  margin: 4px 0;
+}
+
+.message-text blockquote {
+  border-left: 4px solid #1890ff;
+  padding-left: 12px;
+  margin: 8px 0;
+  color: #666;
+  font-style: italic;
+}
+
+.message-text table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+}
+
+.message-text th, .message-text td {
+  border: 1px solid #e8e8e8;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.message-text th {
+  background: #fafafa;
+  font-weight: 600;
 }
 
 .user-message .message-text {
