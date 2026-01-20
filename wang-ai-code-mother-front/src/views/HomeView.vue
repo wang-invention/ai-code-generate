@@ -2,7 +2,7 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { PlusOutlined, SearchOutlined, ReloadOutlined, ThunderboltOutlined, BulbOutlined, ShoppingOutlined, FileTextOutlined, BankOutlined, BarChartOutlined, StarOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, SearchOutlined, ReloadOutlined, ThunderboltOutlined, ShoppingOutlined, FileTextOutlined, BankOutlined, BarChartOutlined, StarOutlined, RightOutlined, AppstoreOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons-vue'
 import { addApp, listMyAppVoByPage, listGoodAppVoByPage } from '@/api/appController'
 import { useLoginUserStore } from '@/stores/LoginUser'
 
@@ -184,22 +184,22 @@ onMounted(() => {
           <span>AI 驱动，即时生成</span>
         </div>
         <h1 class="hero-title">
-          用自然语言<br />
-          <span class="gradient-text">创造你的应用</span>
+          与 AI 对话<br />
+          <span class="highlight-text">轻松创建应用和网站</span>
         </h1>
         <p class="hero-subtitle">
-          无需编程知识，只需描述你的想法，AI 即可为你生成完整的网站应用
+          使用自然语言描述你的想法，AI 即可为你生成完整的网站应用，无需任何编程知识
         </p>
       </div>
     </div>
 
     <div class="prompt-section">
-      <a-card :bordered="false" class="prompt-card">
+      <div class="prompt-card">
         <div class="prompt-input-wrapper">
           <a-textarea
             v-model:value="promptInput"
-            placeholder="描述你想要创建的应用，例如：创建一个现代化的电商网站，包含商品展示、购物车功能..."
-            :auto-size="{ minRows: 3, maxRows: 6 }"
+            placeholder="使用 NoCode 创建一个数据分析看板，用来分析销售数据、用户增长趋势..."
+            :auto-size="{ minRows: 4, maxRows: 8 }"
             class="prompt-textarea"
           />
           <div class="prompt-actions">
@@ -220,7 +220,6 @@ onMounted(() => {
 
         <div class="examples-section">
           <div class="examples-header">
-            <BulbOutlined />
             <span>试试这些示例</span>
           </div>
           <div class="examples-grid">
@@ -237,61 +236,129 @@ onMounted(() => {
                 <div class="example-title">{{ example.title }}</div>
                 <div class="example-desc">{{ example.desc }}</div>
               </div>
+              <RightOutlined class="example-arrow" />
             </div>
           </div>
         </div>
-      </a-card>
+      </div>
+    </div>
+
+    <div class="good-apps-section">
+      <div class="section-header">
+        <div class="section-title">
+          <h2>案例广场</h2>
+          <p>探索社区创作的精彩应用，获取灵感</p>
+        </div>
+        <div class="section-actions">
+          <a-input
+            v-model:value="goodAppsSearchName"
+            placeholder="搜索案例"
+            allow-clear
+            class="search-input"
+            @press-enter="handleGoodAppsSearch"
+          >
+            <template #prefix>
+              <SearchOutlined />
+            </template>
+          </a-input>
+          <a-button @click="handleGoodAppsReset" class="icon-button">
+            <ReloadOutlined />
+          </a-button>
+        </div>
+      </div>
+
+      <div class="apps-grid">
+        <a-spin :spinning="goodAppsLoading">
+          <div v-if="goodAppsLoading" class="skeleton-grid">
+            <div v-for="i in 8" :key="i" class="app-skeleton">
+              <a-skeleton active :loading="true">
+                <a-skeleton-image class="skeleton-cover" />
+                <a-skeleton-input style="width: 100%; margin-top: 12px;" />
+                <a-skeleton-input style="width: 100%; margin-top: 8px;" size="small" />
+              </a-skeleton>
+            </div>
+          </div>
+          <div v-else-if="goodApps.length === 0" class="empty-state">
+            <a-empty description="暂无案例" />
+          </div>
+          <div v-else class="apps-list">
+            <div
+              v-for="app in goodApps"
+              :key="app.id"
+              class="app-card featured"
+              @click="goToAppChat(app.id!)"
+            >
+              <div class="app-cover">
+                <img
+                  v-if="app.cover"
+                  :src="app.cover"
+                  :alt="app.appName"
+                />
+                <div v-else class="default-cover">
+                  <span>{{ app.appName?.charAt(0) || 'A' }}</span>
+                </div>
+                <div class="featured-badge">
+                  <StarOutlined />
+                  <span>精选</span>
+                </div>
+              </div>
+              <div class="app-info">
+                <h3 class="app-name">{{ app.appName || '未命名应用' }}</h3>
+                <p class="app-desc">{{ app.initPrompt || '暂无描述' }}</p>
+              </div>
+            </div>
+          </div>
+        </a-spin>
+      </div>
+
+      <div v-if="goodAppsTotal > 0" class="pagination">
+        <a-pagination
+          v-model:current="goodAppsCurrentPage"
+          v-model:page-size="goodAppsPageSize"
+          :total="goodAppsTotal"
+          :show-size-changer="false"
+          :show-quick-jumper="true"
+          :show-total="(total) => `共 ${total} 条`"
+          @change="handleGoodAppsPageChange"
+        />
+      </div>
     </div>
 
     <div class="my-apps-section">
-      <a-card :bordered="false" class="apps-card">
-        <template #title>
-          <div class="section-title">
-            <span>我的应用</span>
-            <a-tag v-if="myAppsTotal > 0" color="blue">{{ myAppsTotal }}</a-tag>
-          </div>
-        </template>
+      <div class="section-header">
+        <div class="section-title">
+          <h2>我的应用</h2>
+          <p>管理你创建的所有应用</p>
+        </div>
+        <div class="section-actions">
+          <a-input
+            v-model:value="myAppsSearchName"
+            placeholder="搜索应用"
+            allow-clear
+            class="search-input"
+            @press-enter="handleMyAppsSearch"
+          >
+            <template #prefix>
+              <SearchOutlined />
+            </template>
+          </a-input>
+          <a-button @click="handleMyAppsReset" class="icon-button">
+            <ReloadOutlined />
+          </a-button>
+        </div>
+      </div>
 
-        <template #extra>
-          <a-space>
-            <a-input
-              v-model:value="myAppsSearchName"
-              placeholder="搜索应用名称"
-              allow-clear
-              style="width: 200px"
-              @press-enter="handleMyAppsSearch"
-            >
-              <template #prefix>
-                <SearchOutlined />
-              </template>
-            </a-input>
-            <a-button @click="handleMyAppsSearch">
-              <template #icon>
-                <SearchOutlined />
-              </template>
-            </a-button>
-            <a-button @click="handleMyAppsReset">
-              <template #icon>
-                <ReloadOutlined />
-              </template>
-            </a-button>
-          </a-space>
-        </template>
-
-        <div v-if="loginUserStore.isLogin" class="apps-list">
+      <div class="apps-grid">
+        <div v-if="loginUserStore.isLogin">
           <a-spin :spinning="myAppsLoading">
             <div v-if="myAppsLoading" class="skeleton-grid">
-              <a-row :gutter="[16, 16]">
-                <a-col v-for="i in 8" :key="i" :xs="24" :sm="12" :md="8" :lg="6">
-                  <a-card>
-                    <a-skeleton active :loading="true">
-                      <a-skeleton-image />
-                      <a-skeleton-input style="width: 100%; margin-top: 12px;" />
-                      <a-skeleton-input style="width: 100%; margin-top: 8px;" size="small" />
-                    </a-skeleton>
-                  </a-card>
-                </a-col>
-              </a-row>
+              <div v-for="i in 8" :key="i" class="app-skeleton">
+                <a-skeleton active :loading="true">
+                  <a-skeleton-image class="skeleton-cover" />
+                  <a-skeleton-input style="width: 100%; margin-top: 12px;" />
+                  <a-skeleton-input style="width: 100%; margin-top: 8px;" size="small" />
+                </a-skeleton>
+              </div>
             </div>
             <div v-else-if="myApps.length === 0" class="empty-state">
               <a-empty description="暂无应用，快来创建一个吧！">
@@ -300,42 +367,29 @@ onMounted(() => {
                 </a-button>
               </a-empty>
             </div>
-            <a-row v-else :gutter="[16, 16]">
-              <a-col
+            <div v-else class="apps-list">
+              <div
                 v-for="app in myApps"
                 :key="app.id"
-                :xs="24"
-                :sm="12"
-                :md="8"
-                :lg="6"
+                class="app-card"
+                @click="goToAppChat(app.id!)"
               >
-                <a-card
-                  hoverable
-                  class="app-card"
-                  @click="goToAppChat(app.id!)"
-                >
-                  <template #cover>
-                    <div class="app-cover">
-                      <img
-                        v-if="app.cover"
-                        :src="app.cover"
-                        :alt="app.appName"
-                      />
-                      <div v-else class="default-cover">
-                        <span>{{ app.appName?.charAt(0) || 'A' }}</span>
-                      </div>
-                    </div>
-                  </template>
-                  <a-card-meta :title="app.appName || '未命名应用'">
-                    <template #description>
-                      <div class="app-desc">
-                        {{ app.initPrompt || '暂无描述' }}
-                      </div>
-                    </template>
-                  </a-card-meta>
-                </a-card>
-              </a-col>
-            </a-row>
+                <div class="app-cover">
+                  <img
+                    v-if="app.cover"
+                    :src="app.cover"
+                    :alt="app.appName"
+                  />
+                  <div v-else class="default-cover">
+                    <span>{{ app.appName?.charAt(0) || 'A' }}</span>
+                  </div>
+                </div>
+                <div class="app-info">
+                  <h3 class="app-name">{{ app.appName || '未命名应用' }}</h3>
+                  <p class="app-desc">{{ app.initPrompt || '暂无描述' }}</p>
+                </div>
+              </div>
+            </div>
           </a-spin>
         </div>
         <div v-else class="login-tip">
@@ -345,181 +399,39 @@ onMounted(() => {
             </a-button>
           </a-empty>
         </div>
+      </div>
 
-        <div v-if="myAppsTotal > 0" class="pagination">
-          <a-pagination
-            v-model:current="myAppsCurrentPage"
-            v-model:page-size="myAppsPageSize"
-            :total="myAppsTotal"
-            :show-size-changer="false"
-            :show-quick-jumper="true"
-            :show-total="(total) => `共 ${total} 条`"
-            @change="handleMyAppsPageChange"
-          />
-        </div>
-      </a-card>
-    </div>
-
-    <div class="good-apps-section">
-      <a-card :bordered="false" class="apps-card">
-        <template #title>
-          <div class="section-title">
-            <span>精选应用</span>
-            <a-tag v-if="goodAppsTotal > 0" color="gold">{{ goodAppsTotal }}</a-tag>
-          </div>
-        </template>
-
-        <template #extra>
-          <a-space>
-            <a-input
-              v-model:value="goodAppsSearchName"
-              placeholder="搜索应用名称"
-              allow-clear
-              style="width: 200px"
-              @press-enter="handleGoodAppsSearch"
-            >
-              <template #prefix>
-                <SearchOutlined />
-              </template>
-            </a-input>
-            <a-button @click="handleGoodAppsSearch">
-              <template #icon>
-                <SearchOutlined />
-              </template>
-            </a-button>
-            <a-button @click="handleGoodAppsReset">
-              <template #icon>
-                <ReloadOutlined />
-              </template>
-            </a-button>
-          </a-space>
-        </template>
-
-        <div class="apps-list">
-          <a-spin :spinning="goodAppsLoading">
-            <div v-if="goodAppsLoading" class="skeleton-grid">
-              <a-row :gutter="[16, 16]">
-                <a-col v-for="i in 8" :key="i" :xs="24" :sm="12" :md="8" :lg="6">
-                  <a-card>
-                    <a-skeleton active :loading="true">
-                      <a-skeleton-image />
-                      <a-skeleton-input style="width: 100%; margin-top: 12px;" />
-                      <a-skeleton-input style="width: 100%; margin-top: 8px;" size="small" />
-                    </a-skeleton>
-                  </a-card>
-                </a-col>
-              </a-row>
-            </div>
-            <div v-else-if="goodApps.length === 0" class="empty-state">
-              <a-empty description="暂无精选应用" />
-            </div>
-            <a-row v-else :gutter="[16, 16]">
-              <a-col
-                v-for="app in goodApps"
-                :key="app.id"
-                :xs="24"
-                :sm="12"
-                :md="8"
-                :lg="6"
-              >
-                <a-card
-                  hoverable
-                  class="app-card featured"
-                  @click="goToAppChat(app.id!)"
-                >
-                  <template #cover>
-                    <div class="app-cover">
-                      <img
-                        v-if="app.cover"
-                        :src="app.cover"
-                        :alt="app.appName"
-                      />
-                      <div v-else class="default-cover">
-                        <span>{{ app.appName?.charAt(0) || 'A' }}</span>
-                      </div>
-                      <div class="featured-badge">
-                        <StarOutlined />
-                        <span>精选</span>
-                      </div>
-                    </div>
-                  </template>
-                  <a-card-meta :title="app.appName || '未命名应用'">
-                    <template #description>
-                      <div class="app-desc">
-                        {{ app.initPrompt || '暂无描述' }}
-                      </div>
-                    </template>
-                  </a-card-meta>
-                </a-card>
-              </a-col>
-            </a-row>
-          </a-spin>
-        </div>
-
-        <div v-if="goodAppsTotal > 0" class="pagination">
-          <a-pagination
-            v-model:current="goodAppsCurrentPage"
-            v-model:page-size="goodAppsPageSize"
-            :total="goodAppsTotal"
-            :show-size-changer="false"
-            :show-quick-jumper="true"
-            :show-total="(total) => `共 ${total} 条`"
-            @change="handleGoodAppsPageChange"
-          />
-        </div>
-      </a-card>
+      <div v-if="myAppsTotal > 0" class="pagination">
+        <a-pagination
+          v-model:current="myAppsCurrentPage"
+          v-model:page-size="myAppsPageSize"
+          :total="myAppsTotal"
+          :show-size-changer="false"
+          :show-quick-jumper="true"
+          :show-total="(total) => `共 ${total} 条`"
+          @change="handleMyAppsPageChange"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .home-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 60px 40px;
+  background: #ffffff;
+  min-height: 100vh;
 }
 
 .hero-section {
   text-align: center;
-  margin-bottom: 48px;
-  padding: 60px 40px;
-  background: #1890ff;
-  border-radius: 24px;
-  color: white;
+  margin-bottom: 80px;
+  padding: 80px 40px;
+  background: #ffffff;
+  color: #333;
   position: relative;
-  overflow: hidden;
-  animation: fadeInUp 0.8s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.hero-section::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
-  animation: rotate 20s linear infinite;
-}
-
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .hero-content {
@@ -530,132 +442,135 @@ onMounted(() => {
 .hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
+  gap: 8px;
+  padding: 10px 24px;
+  background: #f0f7ff;
+  border: 1px solid #e6f4ff;
+  border-radius: 24px;
   font-size: 14px;
   font-weight: 500;
-  margin-bottom: 24px;
-  backdrop-filter: blur(10px);
+  color: #1890ff;
+  margin-bottom: 32px;
 }
 
 .hero-title {
   font-size: 56px;
-  font-weight: 800;
-  margin: 0 0 20px 0;
+  font-weight: 700;
+  margin: 0 0 24px 0;
   line-height: 1.2;
-  color: white;
+  color: #1a1a1a;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-.gradient-text {
-  background: #fff;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.highlight-text {
+  color: #1890ff;
 }
 
 .hero-subtitle {
   font-size: 18px;
   margin: 0;
-  opacity: 0.95;
-  max-width: 600px;
+  color: #666;
+  max-width: 700px;
   margin-left: auto;
   margin-right: auto;
-  line-height: 1.6;
+  line-height: 1.8;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .prompt-section {
-  margin-bottom: 48px;
-  animation: fadeInUp 0.8s ease-out 0.2s both;
+  margin-bottom: 80px;
 }
 
 .prompt-card {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .prompt-input-wrapper {
-  margin-bottom: 32px;
+  margin-bottom: 48px;
 }
 
 .prompt-textarea {
   font-size: 16px;
-  border-radius: 12px;
-  border: 2px solid #e8e8e8;
-  transition: all 0.3s;
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.2s;
+  padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .prompt-textarea:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
 }
 
 .prompt-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
+  margin-top: 20px;
 }
 
 .create-button {
   height: 48px;
-  padding: 0 32px;
+  padding: 0 48px;
   font-size: 16px;
-  font-weight: 600;
-  border-radius: 12px;
+  font-weight: 500;
+  border-radius: 8px;
   background: #1890ff;
-  border: none;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
-  transition: all 0.3s;
+  border: 1px solid #1890ff;
+  transition: all 0.2s;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .create-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(24, 144, 255, 0.5);
+  background: #40a9ff;
+  border-color: #40a9ff;
 }
 
 .examples-section {
   border-top: 1px solid #f0f0f0;
-  padding-top: 24px;
+  padding-top: 40px;
 }
 
 .examples-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   font-size: 16px;
   font-weight: 600;
   color: #333;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .examples-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
 }
 
 .example-card {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
   background: #fafafa;
-  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s;
-  border: 2px solid transparent;
+  transition: all 0.2s;
+  position: relative;
 }
 
 .example-card:hover {
-  background: white;
-  border-color: #667eea;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .example-icon {
   font-size: 32px;
+  color: #1890ff;
   flex-shrink: 0;
 }
 
@@ -664,62 +579,120 @@ onMounted(() => {
 }
 
 .example-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: #333;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .example-desc {
-  font-size: 12px;
+  font-size: 13px;
   color: #666;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-.my-apps-section,
-.good-apps-section {
-  margin-bottom: 48px;
-  animation: fadeInUp 0.8s ease-out 0.4s both;
+.example-arrow {
+  color: #999;
+  font-size: 14px;
+  transition: all 0.2s;
 }
 
-.apps-card {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border-radius: 16px;
+.example-card:hover .example-arrow {
+  color: #1890ff;
+  transform: translateX(4px);
 }
 
-.section-title {
+.good-apps-section,
+.my-apps-section {
+  margin-bottom: 80px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.section-title h2 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #1a1a1a;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.section-title p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.section-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-input {
+  width: 280px;
+  border-radius: 8px;
+}
+
+.icon-button {
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
+  justify-content: center;
 }
 
-.apps-list {
+.apps-grid {
   min-height: 200px;
 }
 
-.app-card {
-  cursor: pointer;
-  transition: all 0.3s;
-  border-radius: 12px;
-  overflow: hidden;
-  animation: fadeIn 0.6s ease-out both;
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.app-skeleton {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.skeleton-cover {
+  width: 100%;
+  height: 180px;
+  border-radius: 6px;
+}
+
+.apps-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.app-card {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .app-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  border-color: #1890ff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
 }
 
 .app-card.featured {
@@ -759,68 +732,97 @@ onMounted(() => {
   background: #ff6b6b;
   color: white;
   padding: 6px 12px;
-  border-radius: 20px;
+  border-radius: 16px;
   font-size: 12px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-info {
+  padding: 20px;
+}
+
+.app-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .app-desc {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  height: 40px;
-  line-height: 20px;
+  height: 42px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .empty-state,
 .login-tip {
-  padding: 60px 0;
-}
-
-.pagination {
-  margin-top: 24px;
+  padding: 100px 0;
   text-align: center;
 }
 
-:deep(.ant-card-head-title) {
-  padding: 20px 0;
-}
-
-:deep(.ant-card-meta-title) {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-:deep(.ant-card-meta-description) {
-  color: #666;
-}
-
-:deep(.ant-input) {
-  border-radius: 8px;
-}
-
-:deep(.ant-btn) {
-  border-radius: 8px;
+.pagination {
+  margin-top: 40px;
+  text-align: center;
 }
 
 @media (max-width: 768px) {
+  .home-container {
+    padding: 40px 20px;
+  }
+
+  .hero-section {
+    padding: 60px 20px;
+    margin-bottom: 60px;
+  }
+
   .hero-title {
-    font-size: 36px;
+    font-size: 40px;
   }
 
   .hero-subtitle {
     font-size: 16px;
   }
 
+  .prompt-card {
+    padding: 24px;
+  }
+
   .examples-grid {
     grid-template-columns: 1fr;
   }
 
-  .app-card {
-    margin-bottom: 16px;
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .section-actions {
+    width: 100%;
+  }
+
+  .section-actions .search-input {
+    flex: 1;
+    width: 100%;
+  }
+
+  .apps-list {
+    grid-template-columns: 1fr;
   }
 }
 </style>

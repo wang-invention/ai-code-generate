@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, h } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { menuItems } from '../router'
 import { useLoginUserStore } from '@/stores/LoginUser'
+import { UserOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons-vue'
 import type { MenuProps } from 'ant-design-vue'
 
 const loginUserStore = useLoginUserStore()
@@ -48,12 +49,12 @@ const userMenuItems: MenuProps['items'] = [
   {
     key: 'user-info',
     label: '个人信息',
-    icon: '👤',
+    icon: () => h(UserOutlined),
   },
   {
     key: 'settings',
     label: '设置',
-    icon: '⚙️',
+    icon: () => h(SettingOutlined),
   },
   {
     type: 'divider',
@@ -61,7 +62,7 @@ const userMenuItems: MenuProps['items'] = [
   {
     key: 'logout',
     label: '退出登录',
-    icon: '🚪',
+    icon: () => h(LogoutOutlined),
     danger: true,
   },
 ]
@@ -110,7 +111,7 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
           </a-dropdown>
         </div>
         <div v-else>
-          <a-button type="primary" @click="router.push('/user/login')">登录</a-button>
+          <a-button type="primary" class="login-button">登录</a-button>
         </div>
       </div>
     </div>
@@ -120,19 +121,19 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
 <style scoped>
 .header {
   background-color: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #e8e8e8;
   height: 64px;
   line-height: 64px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 40px;
 }
 
 .header-left {
@@ -143,27 +144,27 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
 .logo {
   display: flex;
   align-items: center;
-  margin-right: 40px;
+  margin-right: 48px;
+  cursor: pointer;
 }
 
 .logo-img {
   width: 32px;
   height: 32px;
-  margin-right: 8px;
+  margin-right: 10px;
 }
 
 .title {
-  font-size: 20px;
-  font-weight: bold;
-  background: #1890ff;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .header-menu {
   border-bottom: none;
   background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .user-section {
@@ -173,35 +174,44 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
 
 .user-avatar {
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-  background: #1890ff;
-  color: #fff;
-  font-weight: 600;
+  transition: all 0.2s;
+  border: 2px solid #e8e8e8;
+  background: #f5f5f5;
+  color: #666;
+  font-weight: 500;
   font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .user-avatar:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  border-color: #1890ff;
+  background: #1890ff;
+  color: #fff;
+  transform: scale(1.05);
 }
 
-.user-avatar:active {
-  transform: scale(0.95);
+.login-button {
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 :deep(.ant-dropdown-menu) {
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  padding: 8px 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 4px 0;
   min-width: 160px;
+  border: 1px solid #e8e8e8;
 }
 
 :deep(.ant-dropdown-menu-item) {
   padding: 10px 16px;
-  margin: 4px 8px;
-  border-radius: 8px;
+  margin: 2px 8px;
+  border-radius: 6px;
   transition: all 0.2s;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 :deep(.ant-dropdown-menu-item:hover) {
@@ -214,5 +224,23 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
 
 :deep(.ant-dropdown-menu-item-danger:hover) {
   background-color: #fff1f0;
+}
+
+:deep(.ant-menu-horizontal) {
+  border-bottom: none;
+}
+
+:deep(.ant-menu-item) {
+  border-radius: 6px;
+  margin: 0 4px;
+}
+
+:deep(.ant-menu-item-selected) {
+  background-color: #e6f4ff;
+  color: #1890ff;
+}
+
+:deep(.ant-menu-item:hover) {
+  background-color: #f5f5f5;
 }
 </style>
