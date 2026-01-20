@@ -57,7 +57,6 @@ public class AppController {
     private ChatHistoryService chatHistoryService;
 
 
-
     /**
      * 应用部署
      *
@@ -88,57 +87,56 @@ public class AppController {
      * @return
      */
 
-  @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId,
-                                                   @RequestParam String message,
-                                                   HttpServletRequest request) {
-    // 参数校验
-    ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID无效");
-    ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "用户消息不能为空");
-    // 获取当前登录用户
-    User loginUser = userService.getLoginUser(request);
-    // 保存用户的消息
-    chatHistoryService.addChatHistoryMessage(message, appId, loginUser.getId(), ChatHistoryMessageTypeEnum.USER.getValue());
+    @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId,
+                                                       @RequestParam String message,
+                                                       HttpServletRequest request) {
+        // 参数校验
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID无效");
+        ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "用户消息不能为空");
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+        // 保存用户的消息
+        chatHistoryService.addChatHistoryMessage(message, appId, loginUser.getId(), ChatHistoryMessageTypeEnum.USER.getValue());
 
-    // 模拟假消息流
-    Flux<String> contentFlux = Flux.just("假消息 1", "假消息 2", "假消息 3", "假消息 4")
-                                    .delayElements(Duration.ofSeconds(1));  // 每1秒发送一个假消息
+        // 模拟假消息流
+        Flux<String> contentFlux = appService.chatToGenCode(message, String.valueOf(appId), loginUser);
 
-    // 保存AI聊天记录
-    StringBuilder AiChatContent = new StringBuilder();
+        // 保存AI聊天记录
+        StringBuilder AiChatContent = new StringBuilder();
 
-    // 转换为 ServerSentEvent 格式
-    return contentFlux
-            .map(chunk -> {
-                // 收集AI返回的消息
-                AiChatContent.append(chunk);
-                // 将内容包装成JSON对象
-                Map<String, String> wrapper = Map.of("d", chunk);
-                String jsonData = JSONUtil.toJsonStr(wrapper);
-                return ServerSentEvent.<String>builder()
-                        .data(jsonData)
-                        .build();
-            })
-            .concatWith(Mono.just(ServerSentEvent.<String>builder()
-                    .event("done")
-                    .data("")
-                    .build()))
-            .doOnComplete(
-                    () -> {
-                        String string = AiChatContent.toString();
-                        if (StrUtil.isNotBlank(string)) {
-                            // 收集完成后保存AI返回的消息
-                            chatHistoryService.addChatHistoryMessage(string, appId, loginUser.getId(), ChatHistoryMessageTypeEnum.AI.getValue());
+        // 转换为 ServerSentEvent 格式
+        return contentFlux
+                .map(chunk -> {
+                    // 收集AI返回的消息
+                    AiChatContent.append(chunk);
+                    // 将内容包装成JSON对象
+                    Map<String, String> wrapper = Map.of("d", chunk);
+                    String jsonData = JSONUtil.toJsonStr(wrapper);
+                    return ServerSentEvent.<String>builder()
+                            .data(jsonData)
+                            .build();
+                })
+                .concatWith(Mono.just(ServerSentEvent.<String>builder()
+                        .event("done")
+                        .data("")
+                        .build()))
+                .doOnComplete(
+                        () -> {
+                            String string = AiChatContent.toString();
+                            if (StrUtil.isNotBlank(string)) {
+                                // 收集完成后保存AI返回的消息
+                                chatHistoryService.addChatHistoryMessage(string, appId, loginUser.getId(), ChatHistoryMessageTypeEnum.AI.getValue());
+                            }
                         }
-                    }
-            )
-            .doOnError(
-                    error -> {
-                        String errMsg = "AI回复失败" + error.getMessage();
-                        chatHistoryService.addChatHistoryMessage(errMsg, appId, loginUser.getId(), ChatHistoryMessageTypeEnum.AI.getValue());
-                    }
-            );
-}
+                )
+                .doOnError(
+                        error -> {
+                            String errMsg = "AI回复失败" + error.getMessage();
+                            chatHistoryService.addChatHistoryMessage(errMsg, appId, loginUser.getId(), ChatHistoryMessageTypeEnum.AI.getValue());
+                        }
+                );
+    }
 
     /**
      * 管理员根据 id 获取应用详情
