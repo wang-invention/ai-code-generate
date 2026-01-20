@@ -11,6 +11,7 @@ import com.wang.wangaicodemother.common.DeleteRequest;
 import com.wang.wangaicodemother.common.ResultUtils;
 import com.wang.wangaicodemother.constants.AppConstant;
 import com.wang.wangaicodemother.constants.UserConstant;
+import com.wang.wangaicodemother.enums.ChatHistoryMessageTypeEnum;
 import com.wang.wangaicodemother.enums.CodeGenTypeEnum;
 import com.wang.wangaicodemother.exception.BusinessException;
 import com.wang.wangaicodemother.exception.ErrorCode;
@@ -20,12 +21,15 @@ import com.wang.wangaicodemother.model.entity.App;
 import com.wang.wangaicodemother.model.entity.User;
 import com.wang.wangaicodemother.model.vo.AppVO;
 import com.wang.wangaicodemother.service.AppService;
+import com.wang.wangaicodemother.service.ChatHistoryService;
 import com.wang.wangaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.View;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -47,6 +51,11 @@ public class AppController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private ChatHistoryService chatHistoryService;
+    @Autowired
+    private View error;
 
 
     /**
@@ -88,11 +97,17 @@ public class AppController {
         ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "用户消息不能为空");
         // 获取当前登录用户
         User loginUser = userService.getLoginUser(request);
+        //保存用户的消息
+        chatHistoryService.addChatHistoryMessage(message, appId, loginUser.getId(), ChatHistoryMessageTypeEnum.USER.getValue());
         // 调用服务生成代码（流式）
         Flux<String> contentFlux = appService.chatToGenCode(message, String.valueOf(appId), loginUser);
+        //保存AI聊天记录
+        StringBuilder AiChatContent = new StringBuilder();
         // 转换为 ServerSentEvent 格式
         return contentFlux
                 .map(chunk -> {
+                    //收集AI返回的消息
+                    AiChatContent.append(chunk);
                     // 将内容包装成JSON对象
                     Map<String, String> wrapper = Map.of("d", chunk);
                     String jsonData = JSONUtil.toJsonStr(wrapper);
@@ -102,7 +117,20 @@ public class AppController {
                 }).concatWith(Mono.just(ServerSentEvent.<String>builder()
                         .event("done")
                         .data("")
-                        .build()));
+                        .build())).doOnComplete(
+                        () -> {
+                            String string = AiChatContent.toString();
+                            if (StrUtil.isNotBlank(string)) {
+                                //收集完成后 保存AI返回的消息
+                                chatHistoryService.addChatHistoryMessage(string, appId, loginUser.getId(), ChatHistoryMessageTypeEnum.AI.getValue());
+                            }
+                        }
+                ).doOnError(
+                        error -> {
+                            String errMsg = "AI回复失败" + error.getMessage();
+                            chatHistoryService.addChatHistoryMessage(errMsg, appId, loginUser.getId(), ChatHistoryMessageTypeEnum.AI.getValue());
+                        }
+                );
     }
 
     /**
