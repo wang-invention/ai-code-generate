@@ -18,6 +18,7 @@ import com.wang.wangaicodemother.exception.ErrorCode;
 import com.wang.wangaicodemother.exception.ThrowUtils;
 import com.wang.wangaicodemother.model.dto.*;
 import com.wang.wangaicodemother.model.entity.App;
+import com.wang.wangaicodemother.model.entity.ChatHistory;
 import com.wang.wangaicodemother.model.entity.User;
 import com.wang.wangaicodemother.model.vo.AppVO;
 import com.wang.wangaicodemother.service.AppService;
@@ -25,15 +26,12 @@ import com.wang.wangaicodemother.service.ChatHistoryService;
 import com.wang.wangaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.View;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -285,11 +283,19 @@ public class AppController {
     public BaseResponse<AppVO> getAppVOById(long id) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         // 查询数据库
-        System.err.println("id: " + id);
         App app = appService.getById(id);
+        //查询对话历史表
+        QueryWrapper query = QueryWrapper.create()
+                .eq("appId", id);
+
+        AppVO appVO = appService.getAppVO(app);
+        List<ChatHistory> list = chatHistoryService.list(query);
+        if (!list.isEmpty()) {
+            appVO.setIsHistory(true);
+        }
         ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
         // 获取封装类（包含用户信息）
-        return ResultUtils.success(appService.getAppVO(app));
+        return ResultUtils.success(appVO);
     }
 
 

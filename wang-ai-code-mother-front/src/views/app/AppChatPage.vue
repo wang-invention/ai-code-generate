@@ -5,7 +5,9 @@ import { message } from 'ant-design-vue'
 import { SendOutlined, RocketOutlined, ArrowLeftOutlined } from '@ant-design/icons-vue'
 import { getAppVoById, deployApp } from '@/api/appController'
 import { useLoginUserStore } from '@/stores/LoginUser'
-import { marked } from 'marked' 
+import { marked } from 'marked'
+import { listAppChatHistory } from '@/api/chatHistoryController.ts'
+
 const route = useRoute()
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
@@ -34,14 +36,40 @@ const fetchAppInfo = async () => {
     const res = await getAppVoById({ id: appId.value })
     if (res.data.code === 0 && res.data.data) {
       appInfo.value = res.data.data
-      if (appInfo.value.initPrompt) {
-        messages.value.push({
-          role: 'user',
-          content: appInfo.value.initPrompt
+      if (appInfo.value.isHistory===true) {
+        listAppChatHistory({
+          appId: appInfo.value.id,
+          current: 1,
+          pageSize: 10,
+        }).then((res) => {
+          const ans = res.data.data?.records || []
+          ans.forEach((item) => {
+            if (item.messageType === 'user') {
+              messages.value.push({
+                role: 'user',
+                content: item.message,
+              })
+            } else if (item.messageType === 'ai') {
+              messages.value.push({
+                role: 'assistant',
+                content: item.message,
+              })
+            }
+          })
+          previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/index.html`
+          showPreview.value = true
+          scrollToBottom()
         })
-        await sendInitialMessage(appInfo.value.initPrompt)
+      } else {
+        if (appInfo.value.initPrompt) {
+          messages.value.push({
+            role: 'user',
+            content: appInfo.value.initPrompt,
+          })
+          await sendInitialMessage(appInfo.value.initPrompt)
+        }
+        scrollToBottom()
       }
-      scrollToBottom()
     } else {
       message.error(res.data.message || '获取应用信息失败')
     }
@@ -60,9 +88,9 @@ const sendInitialMessage = async (prompt: string) => {
       {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      },
     )
 
     if (!response.ok) {
@@ -78,7 +106,7 @@ const sendInitialMessage = async (prompt: string) => {
 
     messages.value.push({
       role: 'assistant',
-      content: ''
+      content: '',
     })
 
     while (true) {
@@ -90,31 +118,29 @@ const sendInitialMessage = async (prompt: string) => {
 
       let currentEvent = 'message'
 
-for (const line of lines) {
-  if (line.startsWith('event:')) {
-    currentEvent = line.replace(/^event:\s*/, '')
-    continue
-  }
+      for (const line of lines) {
+        if (line.startsWith('event:')) {
+          currentEvent = line.replace(/^event:\s*/, '')
+          continue
+        }
 
-  if (!line.startsWith('data:')) continue
+        if (!line.startsWith('data:')) continue
 
-  const data = line.replace(/^data:\s*/, '')
+        const data = line.replace(/^data:\s*/, '')
 
-  if (currentEvent === 'done') {
-    showPreview.value = true
-    //http://localhost:8123/api/static/html_2011763874621632512/index.html
-    previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/index.html`
-    continue
-  }
+        if (currentEvent === 'done') {
+          showPreview.value = true
+          //http://localhost:8123/api/static/html_2011763874621632512/index.html
+          previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/index.html`
+          continue
+        }
 
-  if (data && data !== 'null') {
-    const json = JSON.parse(data)
-    messages.value[messages.value.length - 1].content += json.d
-    scrollToBottomImmediate()
-  }
-}
-
-
+        if (data && data !== 'null') {
+          const json = JSON.parse(data)
+          messages.value[messages.value.length - 1].content += json.d
+          scrollToBottomImmediate()
+        }
+      }
     }
   } catch (error) {
     message.error('对话失败，请稍后重试')
@@ -139,7 +165,7 @@ const handleSendMessage = async () => {
   const userMessage = inputMessage.value.trim()
   messages.value.push({
     role: 'user',
-    content: userMessage
+    content: userMessage,
   })
   inputMessage.value = ''
   scrollToBottom()
@@ -152,9 +178,9 @@ const handleSendMessage = async () => {
       {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      },
     )
 
     if (!response.ok) {
@@ -170,7 +196,7 @@ const handleSendMessage = async () => {
 
     messages.value.push({
       role: 'assistant',
-      content: ''
+      content: '',
     })
 
     while (true) {
@@ -311,8 +337,7 @@ onMounted(() => {
                 <div class="message-role">
                   {{ msg.role === 'user' ? '你' : 'AI' }}
                 </div>
-                <div class="message-text" v-html="renderMarkdown(msg.content)">
-                </div>
+                <div class="message-text" v-html="renderMarkdown(msg.content)"></div>
               </div>
             </div>
             <div v-if="sending" class="message-item assistant-message">
@@ -355,11 +380,7 @@ onMounted(() => {
             <h3>网站预览</h3>
           </div>
           <div class="preview-iframe">
-            <iframe
-              :src="previewUrl"
-              frameborder="0"
-              class="preview-frame"
-            ></iframe>
+            <iframe :src="previewUrl" frameborder="0" class="preview-frame"></iframe>
           </div>
         </div>
         <div v-else class="preview-placeholder">
@@ -404,7 +425,8 @@ onMounted(() => {
   font-size: 20px;
   font-weight: 600;
   color: #333;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .header-right {
@@ -530,12 +552,18 @@ onMounted(() => {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
 }
 
-.message-text h1, .message-text h2, .message-text h3, .message-text h4, .message-text h5, .message-text h6 {
+.message-text h1,
+.message-text h2,
+.message-text h3,
+.message-text h4,
+.message-text h5,
+.message-text h6 {
   margin: 12px 0;
   font-weight: 600;
 }
 
-.message-text ul, .message-text ol {
+.message-text ul,
+.message-text ol {
   margin: 8px 0;
   padding-left: 24px;
 }
@@ -558,7 +586,8 @@ onMounted(() => {
   margin: 12px 0;
 }
 
-.message-text th, .message-text td {
+.message-text th,
+.message-text td {
   border: 1px solid #e8e8e8;
   padding: 8px 12px;
   text-align: left;
@@ -610,7 +639,9 @@ onMounted(() => {
 }
 
 @keyframes typing {
-  0%, 60%, 100% {
+  0%,
+  60%,
+  100% {
     transform: translateY(0);
   }
   30% {
@@ -694,13 +725,13 @@ onMounted(() => {
   .chat-content {
     flex-direction: column;
   }
-  
+
   .chat-section {
     flex: 1;
     border-right: none;
     border-bottom: 1px solid #e8e8e8;
   }
-  
+
   .preview-section {
     flex: 1;
     border-left: none;

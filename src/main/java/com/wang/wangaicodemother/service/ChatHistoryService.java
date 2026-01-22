@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
  */
 public interface ChatHistoryService extends IService<ChatHistory> {
 
-
     /**
      * 添加对话历史
      * @param userMessage

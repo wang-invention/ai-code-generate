@@ -44,6 +44,7 @@ declare namespace API {
     deployedTime?: string
     priority?: number
     userId?: number
+    isHistory?: boolean
     createTime?: string
     updateTime?: string
     user?: UserVO

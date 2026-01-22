@@ -61,6 +61,7 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
         return save(chatHistory);
     }
 
+
     /**
      * 获取查询包装类
      *

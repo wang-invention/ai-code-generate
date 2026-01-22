@@ -54,6 +54,11 @@ public class AppVO implements Serializable {
     private Long userId;
 
     /**
+     * 是否为历史消息，给前端判断
+     */
+    private Boolean isHistory;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;
