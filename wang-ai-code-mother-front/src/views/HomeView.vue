@@ -418,25 +418,22 @@ onMounted(() => {
 
 <style scoped>
 .home-container {
-  max-width: 1400px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 60px 40px;
-  background: #ffffff;
-  min-height: 100vh;
+  padding: 24px 24px 40px;
+  min-height: calc(100vh - 56px);
 }
 
 .hero-section {
-  text-align: center;
-  margin-bottom: 80px;
-  padding: 80px 40px;
-  background: #ffffff;
-  color: #333;
-  position: relative;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 40px;
+  align-items: center;
+  margin-bottom: 40px;
+  padding: 24px 24px 28px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }
 
 .hero-badge {
@@ -444,9 +441,8 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   padding: 10px 24px;
-  background: #f0f7ff;
-  border: 1px solid #e6f4ff;
-  border-radius: 24px;
+  background: #eef2ff;
+  border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
   color: #1890ff;
@@ -454,39 +450,50 @@ onMounted(() => {
 }
 
 .hero-title {
-  font-size: 56px;
-  font-weight: 700;
-  margin: 0 0 24px 0;
-  line-height: 1.2;
-  color: #1a1a1a;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+  color: #111827;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
 .highlight-text {
-  color: #1890ff;
+  color: #111827;
 }
 
 .hero-subtitle {
-  font-size: 18px;
+  font-size: 14px;
   margin: 0;
-  color: #666;
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: 1.8;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #4b5563;
+  max-width: 480px;
+  line-height: 1.7;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
 .prompt-section {
-  margin-bottom: 80px;
+  margin-bottom: 32px;
 }
 
 .prompt-card {
   background: #ffffff;
-  border: 1px solid #e8e8e8;
-  border-radius: 12px;
-  padding: 40px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px 20px 16px;
 }
 
 .prompt-input-wrapper {
@@ -494,35 +501,49 @@ onMounted(() => {
 }
 
 .prompt-textarea {
-  font-size: 16px;
-  border-radius: 8px;
-  border: 1px solid #d9d9d9;
+  font-size: 14px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
   transition: all 0.2s;
   padding: 16px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
 .prompt-textarea:focus {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+  border-color: #2563eb;
+  box-shadow: none;
 }
 
 .prompt-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
+  margin-top: 12px;
 }
 
 .create-button {
-  height: 48px;
-  padding: 0 48px;
-  font-size: 16px;
+  height: 40px;
+  padding: 0 24px;
+  font-size: 14px;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 4px;
   background: #1890ff;
   border: 1px solid #1890ff;
   transition: all 0.2s;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
 .create-button:hover {
@@ -531,16 +552,23 @@ onMounted(() => {
 }
 
 .examples-section {
-  border-top: 1px solid #f0f0f0;
-  padding-top: 40px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 24px;
 }
 
 .examples-header {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #333;
   margin-bottom: 24px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
 .examples-grid {
@@ -553,24 +581,23 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 24px;
-  background: #fafafa;
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
+  padding: 16px 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
 }
 
 .example-card:hover {
-  background: #ffffff;
-  border-color: #1890ff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #f3f4f6;
+  border-color: #d1d5db;
 }
 
 .example-icon {
-  font-size: 32px;
-  color: #1890ff;
+  font-size: 24px;
+  color: #4b5563;
   flex-shrink: 0;
 }
 
@@ -579,56 +606,78 @@ onMounted(() => {
 }
 
 .example-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: #111827;
   margin-bottom: 6px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
 .example-desc {
   font-size: 13px;
-  color: #666;
+  color: #6b7280;
   line-height: 1.6;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
 .example-arrow {
-  color: #999;
+  color: #9ca3af;
   font-size: 14px;
-  transition: all 0.2s;
-}
-
-.example-card:hover .example-arrow {
-  color: #1890ff;
-  transform: translateX(4px);
 }
 
 .good-apps-section,
 .my-apps-section {
-  margin-bottom: 80px;
+  margin-bottom: 40px;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 40px;
+  margin-bottom: 24px;
 }
 
 .section-title h2 {
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 600;
   margin: 0 0 8px 0;
-  color: #1a1a1a;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #111827;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
 .section-title p {
   font-size: 14px;
-  color: #666;
+  color: #6b7280;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
 .section-actions {
@@ -639,11 +688,11 @@ onMounted(() => {
 
 .search-input {
   width: 280px;
-  border-radius: 8px;
+  border-radius: 4px;
 }
 
 .icon-button {
-  border-radius: 8px;
+  border-radius: 4px;
   width: 40px;
   height: 40px;
   display: flex;
@@ -663,8 +712,8 @@ onMounted(() => {
 
 .app-skeleton {
   background: #ffffff;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
   padding: 16px;
 }
 
@@ -682,28 +731,27 @@ onMounted(() => {
 
 .app-card {
   background: #ffffff;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .app-card:hover {
-  border-color: #1890ff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-4px);
+  border-color: #d1d5db;
+  box-shadow: none;
 }
 
 .app-card.featured {
-  border: 2px solid #ffd700;
+  border: 1px solid #f97316;
 }
 
 .app-cover {
   width: 100%;
   height: 180px;
   overflow: hidden;
-  background: #f5f5f5;
+  background: #f3f4f6;
   position: relative;
 }
 
@@ -719,7 +767,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1890ff;
+  background: #111827;
   color: white;
   font-size: 56px;
   font-weight: 700;
@@ -729,10 +777,10 @@ onMounted(() => {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: #ff6b6b;
+  background: #f97316;
   color: white;
   padding: 6px 12px;
-  border-radius: 16px;
+  border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
   display: flex;
@@ -747,7 +795,7 @@ onMounted(() => {
 .app-name {
   font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: #111827;
   margin: 0 0 8px 0;
   white-space: nowrap;
   overflow: hidden;
@@ -757,7 +805,7 @@ onMounted(() => {
 
 .app-desc {
   font-size: 13px;
-  color: #666;
+  color: #6b7280;
   line-height: 1.6;
   margin: 0;
   display: -webkit-box;
@@ -771,35 +819,28 @@ onMounted(() => {
 
 .empty-state,
 .login-tip {
-  padding: 100px 0;
+  padding: 60px 0;
   text-align: center;
 }
 
 .pagination {
-  margin-top: 40px;
+  margin-top: 24px;
   text-align: center;
 }
 
 @media (max-width: 768px) {
   .home-container {
-    padding: 40px 20px;
+    padding: 16px;
   }
 
   .hero-section {
-    padding: 60px 20px;
-    margin-bottom: 60px;
-  }
-
-  .hero-title {
-    font-size: 40px;
-  }
-
-  .hero-subtitle {
-    font-size: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 20px 16px;
+    margin-bottom: 24px;
   }
 
   .prompt-card {
-    padding: 24px;
+    padding: 16px;
   }
 
   .examples-grid {

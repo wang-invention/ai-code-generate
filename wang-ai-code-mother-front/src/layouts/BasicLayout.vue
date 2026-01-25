@@ -27,35 +27,34 @@ import GlobalFooter from './GlobalFooter.vue'
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: #f3f4f6;
 }
 
 .layout-header {
-  background: #fff;
+  background: #ffffff;
   padding: 0;
-  height: 64px;
-  line-height: 64px;
-  border-bottom: 1px solid #f0f0f0;
+  height: 56px;
+  line-height: 56px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .layout-content {
   flex: 1;
   padding: 24px;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
-  margin-bottom: 80px; /* 为底部预留空间 */
 }
 
 .layout-footer {
   padding: 0;
-  background: #fff;
-  border-top: 1px solid #f0f0f0;
-  height: 60px;
-  line-height: 60px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  height: 56px;
+  line-height: 56px;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .layout-content {
     padding: 16px;

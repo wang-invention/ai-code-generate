@@ -121,121 +121,73 @@ const goToLogin = () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop') no-repeat center center;
-  background-size: cover;
-  position: relative;
-}
-
-.register-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(5px);
+  background: #f3f4f6;
+  padding: 24px 16px;
 }
 
 .register-box {
-  position: relative;
-  width: 420px;
-  padding: 48px 40px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: slideIn 0.6s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  width: 400px;
+  padding: 24px 24px 20px;
+  background: #ffffff;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
 }
 
 .register-header {
-  text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 24px;
 }
 
 .register-header h1 {
-  font-size: 32px;
-  margin-bottom: 12px;
-  background: #1890ff;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 700;
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: #111827;
+  font-weight: 600;
 }
 
 .register-header p {
-  font-size: 14px;
-  color: #666;
+  font-size: 13px;
+  color: #6b7280;
 }
 
 :deep(.ant-form-item-label > label) {
   font-weight: 500;
-  color: #333;
+  color: #374151;
 }
 
 :deep(.ant-input),
 :deep(.ant-input-password) {
-  border-radius: 8px;
-  border: 2px solid #e8e8e8;
-  transition: all 0.3s;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
 }
 
 :deep(.ant-input:hover),
 :deep(.ant-input-password:hover) {
-  border-color: #667eea;
+  border-color: #9ca3af;
 }
 
 :deep(.ant-input:focus),
 :deep(.ant-input-password:focus) {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #2563eb;
+  box-shadow: none;
 }
 
 :deep(.ant-btn-primary) {
-  height: 48px;
-  border-radius: 8px;
-  font-size: 16px;
+  height: 40px;
+  border-radius: 4px;
+  font-size: 14px;
   font-weight: 500;
-  background: #1890ff;
-  border: none;
-  transition: all 0.3s;
-}
-
-:deep(.ant-btn-primary:hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(24, 144, 255, 0.4);
-}
-
-:deep(.ant-btn-primary:active) {
-  transform: translateY(0);
 }
 
 .register-footer {
   text-align: center;
-  margin-top: 24px;
-  font-size: 14px;
-  color: #666;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #6b7280;
 }
 
 .register-footer a {
-  color: #1890ff;
+  color: #2563eb;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s;
-}
-
-.register-footer a:hover {
-  color: #764ba2;
-  text-decoration: underline;
 }
 </style>
