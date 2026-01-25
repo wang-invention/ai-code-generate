@@ -1,5 +1,6 @@
 package com.wang.wangaicodemother.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -15,11 +16,16 @@ import com.wang.wangaicodemother.model.entity.ChatHistory;
 import com.wang.wangaicodemother.model.entity.User;
 import com.wang.wangaicodemother.service.AppService;
 import com.wang.wangaicodemother.service.ChatHistoryService;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 对话历史 服务层实现。
@@ -27,12 +33,12 @@ import java.time.LocalDateTime;
  * @author <a href="https://github.com">wangInvention</a>
  */
 @Service
+@Slf4j
 @Lazy
 public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatHistory> implements ChatHistoryService {
 
 
-    @Resource
-    private AppService appService;
+
 
     @Override
     public boolean addChatHistoryMessage(String userMessage, Long appId, Long userId, String chatType) {
@@ -110,11 +116,6 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
         if (loginUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
-        //校验权限
-        App app = appService.getById(appId);
-        if (!app.getUserId().equals(loginUser.getId())) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }
         ChatHistoryQueryRequest chatHistoryQueryRequest = new ChatHistoryQueryRequest();
         chatHistoryQueryRequest.setAppId(appId);
         chatHistoryQueryRequest.setLastCreateTime(time);
@@ -128,4 +129,41 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
         queryWrapper.where("appId", appId);
         return remove(queryWrapper);
     }
+
+    @Override
+    public int loadChatHistoryToMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount) {
+        try {
+            // 直接构造查询条件，起始点为 1 而不是 0，用于排除最新的用户消息
+            QueryWrapper queryWrapper = QueryWrapper.create()
+                    .eq(ChatHistory::getAppId, appId)
+                    .orderBy(ChatHistory::getCreateTime, false)
+                    .limit(1, maxCount);
+            List<ChatHistory> historyList = this.list(queryWrapper);
+            if (CollUtil.isEmpty(historyList)) {
+                return 0;
+            }
+            // 反转列表，确保按时间正序（老的在前，新的在后）
+            historyList = historyList.reversed();
+            // 按时间顺序添加到记忆中
+            int loadedCount = 0;
+            // 先清理历史缓存，防止重复加载
+            chatMemory.clear();
+            for (ChatHistory history : historyList) {
+                if (ChatHistoryMessageTypeEnum.USER.getValue().equals(history.getMessageType())) {
+                    chatMemory.add(UserMessage.from(history.getMessage()));
+                    loadedCount++;
+                } else if (ChatHistoryMessageTypeEnum.AI.getValue().equals(history.getMessageType())) {
+                    chatMemory.add(AiMessage.from(history.getMessage()));
+                    loadedCount++;
+                }
+            }
+            log.info("成功为 appId: {} 加载了 {} 条历史对话", appId, loadedCount);
+            return loadedCount;
+        } catch (Exception e) {
+            log.error("加载历史对话失败，appId: {}, error: {}", appId, e.getMessage(), e);
+            // 加载失败不影响系统运行，只是没有历史上下文
+            return 0;
+        }
+    }
+
 }

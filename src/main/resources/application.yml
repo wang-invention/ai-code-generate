@@ -8,12 +8,6 @@ spring:
     password: '060228'
   profiles:
     active: local
-  data:
-    redis:
-      host: 101.132.17.101
-      port: 6379
-      password: 'redis_jhjh5p'
-      database: 0
 server:
   port: 8123
   servlet:

@@ -6,6 +6,7 @@ import com.mybatisflex.core.service.IService;
 import com.wang.wangaicodemother.model.dto.ChatHistoryQueryRequest;
 import com.wang.wangaicodemother.model.entity.ChatHistory;
 import com.wang.wangaicodemother.model.entity.User;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 
 import java.time.LocalDateTime;
 
@@ -50,4 +51,13 @@ public interface ChatHistoryService extends IService<ChatHistory> {
      * @param appId
      */
     boolean deleteByAppId(long appId);
+
+    /**
+     * 加载数据库中的历史记录到内存中
+     * @param appId
+     * @param chatMemory
+     * @param maxCount
+     * @return
+     */
+    int loadChatHistoryToMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount);
 }

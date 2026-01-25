@@ -1,6 +1,8 @@
 package com.wang.wangaicodemother.controller;
 
+import cn.hutool.ai.model.deepseek.DeepSeekProvider;
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.wang.wangaicodemother.annotation.AuthCheck;
 import com.wang.wangaicodemother.common.BaseResponse;
@@ -27,6 +29,7 @@ import com.wang.wangaicodemother.model.entity.User;
 import com.wang.wangaicodemother.service.UserService;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.sql.DriverManager;
 import java.util.List;
 
 /**
@@ -37,7 +40,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/user")
 public class UserController {
-
     @Autowired
     private UserService userService;
 

@@ -7,11 +7,14 @@ import com.wang.wangaicodemother.annotation.AuthCheck;
 import com.wang.wangaicodemother.common.BaseResponse;
 import com.wang.wangaicodemother.common.ResultUtils;
 import com.wang.wangaicodemother.constants.UserConstant;
+import com.wang.wangaicodemother.exception.BusinessException;
 import com.wang.wangaicodemother.exception.ErrorCode;
 import com.wang.wangaicodemother.exception.ThrowUtils;
 import com.wang.wangaicodemother.model.dto.ChatHistoryQueryRequest;
+import com.wang.wangaicodemother.model.entity.App;
 import com.wang.wangaicodemother.model.entity.ChatHistory;
 import com.wang.wangaicodemother.model.entity.User;
+import com.wang.wangaicodemother.service.AppService;
 import com.wang.wangaicodemother.service.ChatHistoryService;
 import com.wang.wangaicodemother.service.UserService;
 import jakarta.annotation.Resource;
@@ -37,8 +40,8 @@ public class ChatHistoryController {
 
     @Resource
     private UserService userService;
-
-
+    @Resource
+    private AppService appService;
 
 
     /**
@@ -56,6 +59,11 @@ public class ChatHistoryController {
                                                               @RequestParam(required = false) LocalDateTime lastCreateTime,
                                                               HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
+        //校验权限
+        App app = appService.getById(appId);
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
         Page<ChatHistory> result = chatHistoryService.listAppChatHistoryByPage(appId, loginUser, pageSize, lastCreateTime);
         return ResultUtils.success(result);
     }
@@ -77,7 +85,6 @@ public class ChatHistoryController {
         Page<ChatHistory> result = chatHistoryService.page(Page.of(pageNum, pageSize), queryWrapper);
         return ResultUtils.success(result);
     }
-
 
 
     /**

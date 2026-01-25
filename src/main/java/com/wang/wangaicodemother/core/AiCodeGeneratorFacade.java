@@ -1,5 +1,6 @@
 package com.wang.wangaicodemother.core;
 
+import com.wang.wangaicodemother.ai.AICodeServiceFactory;
 import com.wang.wangaicodemother.ai.Assistant;
 import com.wang.wangaicodemother.ai.model.HtmlCodeResult;
 import com.wang.wangaicodemother.ai.model.MultiFileCodeResult;
@@ -23,7 +24,7 @@ import java.io.File;
 public class AiCodeGeneratorFacade {
 
     @Resource
-    private Assistant aiCodeGeneratorService;
+    private AICodeServiceFactory aiCodeServiceFactory;
 
     /**
      * 统一入口：根据类型生成并保存代码
@@ -33,6 +34,8 @@ public class AiCodeGeneratorFacade {
      * @return 保存的目录
      */
     public File generateAndSaveCode(String userMessage, CodeGenTypeEnum codeGenTypeEnum, String appId) {
+        log.info("开始生成代码，用户提示词：{}，生成类型：{}", userMessage, codeGenTypeEnum);
+        Assistant aiCodeGeneratorService = aiCodeServiceFactory.createAICodeService(Long.parseLong(appId));
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
@@ -59,16 +62,18 @@ public class AiCodeGeneratorFacade {
      * @param codeGenTypeEnum 生成类型
      * @return 保存的目录
      */
-    public Flux<String> generateAndSaveCodeStream(String userMessage, CodeGenTypeEnum codeGenTypeEnum,String appId) {
+    public Flux<String> generateAndSaveCodeStream(String userMessage, CodeGenTypeEnum codeGenTypeEnum, String appId) {
+        log.info("开始生成代码，用户提示词：{}，生成类型：{}", userMessage, codeGenTypeEnum);
+        Assistant aiCodeGeneratorService = aiCodeServiceFactory.createAICodeService(Long.parseLong(appId));
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
         return switch (codeGenTypeEnum) {
             case HTML -> {
-                yield processCodeStream(aiCodeGeneratorService.generateHtmlCodeStream(userMessage), codeGenTypeEnum,appId);
+                yield processCodeStream(aiCodeGeneratorService.generateHtmlCodeStream(userMessage), codeGenTypeEnum, appId);
             }
             case MULTI_FILE -> {
-                yield processCodeStream(aiCodeGeneratorService.generateMultiCodeStream(userMessage), codeGenTypeEnum,appId);
+                yield processCodeStream(aiCodeGeneratorService.generateMultiCodeStream(userMessage), codeGenTypeEnum, appId);
             }
             default -> {
                 String errorMessage = "不支持的生成类型：" + codeGenTypeEnum.getValue();
@@ -85,7 +90,7 @@ public class AiCodeGeneratorFacade {
      * @param codeGenTypeEnum
      * @return
      */
-    private Flux<String> processCodeStream(Flux<String> codeStream, CodeGenTypeEnum codeGenTypeEnum,String appId) {
+    private Flux<String> processCodeStream(Flux<String> codeStream, CodeGenTypeEnum codeGenTypeEnum, String appId) {
 
         StringBuilder codeBuilder = new StringBuilder();
 
@@ -97,7 +102,7 @@ public class AiCodeGeneratorFacade {
                 String completeResult = codeBuilder.toString();
                 //解析代码
                 Object parse = ParseActuator.parse(completeResult, codeGenTypeEnum);
-                CodeFileSaverExecutor.executeSaver(parse, codeGenTypeEnum,appId);
+                CodeFileSaverExecutor.executeSaver(parse, codeGenTypeEnum, appId);
             } catch (Exception e) {
                 log.info("保存代码文件失败：{}" + e.getMessage());
             }
