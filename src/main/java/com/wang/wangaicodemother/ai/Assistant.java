@@ -2,7 +2,10 @@ package com.wang.wangaicodemother.ai;
 
 import com.wang.wangaicodemother.ai.model.HtmlCodeResult;
 import com.wang.wangaicodemother.ai.model.MultiFileCodeResult;
+import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
+import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.service.UserMessage;
 import reactor.core.publisher.Flux;
 
 /**
@@ -33,7 +36,6 @@ public interface Assistant {
     MultiFileCodeResult generateMultiCode(String userMessage);
 
 
-
     /**
      * 生成html
      * SystemMessage(提示词)
@@ -53,4 +55,15 @@ public interface Assistant {
      */
     @SystemMessage(fromResource = "prompt/multi-file.txt")
     Flux<String> generateMultiCodeStream(String userMessage);
+
+
+    /**
+     * 生成 Vue 项目代码（流式）
+     *
+     * @param userMessage 用户消息
+     * @return 生成过程的流式响应
+     */
+    @SystemMessage(fromResource = "prompt/vue.txt")
+    TokenStream generateVueProjectCodeStream(@MemoryId long appId, @UserMessage String userMessage);
+
 }

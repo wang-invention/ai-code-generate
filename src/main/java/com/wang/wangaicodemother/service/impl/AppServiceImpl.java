@@ -9,6 +9,7 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.wang.wangaicodemother.constants.AppConstant;
 import com.wang.wangaicodemother.core.AiCodeGeneratorFacade;
+import com.wang.wangaicodemother.core.handler.StreamHandlerExecutor;
 import com.wang.wangaicodemother.enums.CodeGenTypeEnum;
 import com.wang.wangaicodemother.exception.BusinessException;
 import com.wang.wangaicodemother.exception.ErrorCode;
@@ -19,6 +20,7 @@ import com.wang.wangaicodemother.model.entity.User;
 import com.wang.wangaicodemother.model.vo.AppVO;
 import com.wang.wangaicodemother.model.vo.UserVO;
 import com.wang.wangaicodemother.service.AppService;
+import com.wang.wangaicodemother.service.ChatHistoryService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -47,6 +49,11 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     @Resource
     private AiCodeGeneratorFacade aiCodeGeneratorFacade;
 
+    @Resource
+    private StreamHandlerExecutor streamHandlerExecutor;
+
+    @Resource
+    private ChatHistoryService chatHistoryService;
     /**
      * 获取App信息和关联的用户信息
      *
@@ -138,7 +145,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
         String codeType = app.getCodeGenType();
         CodeGenTypeEnum codeGenTypeEnum = CodeGenTypeEnum.getEnumByValue(codeType);
-        return aiCodeGeneratorFacade.generateAndSaveCodeStream(userMessage, codeGenTypeEnum, appId);
+        Flux<String> streamFlux = aiCodeGeneratorFacade.generateAndSaveCodeStream(userMessage, codeGenTypeEnum, appId);
+        return streamHandlerExecutor.doExecute(streamFlux, chatHistoryService, Long.parseLong(appId), loginUser, codeGenTypeEnum);
     }
 
     @Override

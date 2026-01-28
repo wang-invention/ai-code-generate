@@ -96,8 +96,7 @@ public class AppController {
         User loginUser = userService.getLoginUser(request);
         // 保存用户的消息
         chatHistoryService.addChatHistoryMessage(message, appId, loginUser.getId(), ChatHistoryMessageTypeEnum.USER.getValue());
-
-        // 模拟假消息流
+        // 消息流
         Flux<String> contentFlux = appService.chatToGenCode(message, String.valueOf(appId), loginUser);
 
         // 保存AI聊天记录
@@ -118,22 +117,7 @@ public class AppController {
                 .concatWith(Mono.just(ServerSentEvent.<String>builder()
                         .event("done")
                         .data("")
-                        .build()))
-                .doOnComplete(
-                        () -> {
-                            String string = AiChatContent.toString();
-                            if (StrUtil.isNotBlank(string)) {
-                                // 收集完成后保存AI返回的消息
-                                chatHistoryService.addChatHistoryMessage(string, appId, loginUser.getId(), ChatHistoryMessageTypeEnum.AI.getValue());
-                            }
-                        }
-                )
-                .doOnError(
-                        error -> {
-                            String errMsg = "AI回复失败" + error.getMessage();
-                            chatHistoryService.addChatHistoryMessage(errMsg, appId, loginUser.getId(), ChatHistoryMessageTypeEnum.AI.getValue());
-                        }
-                );
+                        .build()));
     }
 
     /**
