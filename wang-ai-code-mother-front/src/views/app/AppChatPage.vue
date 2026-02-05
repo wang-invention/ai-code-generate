@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { SendOutlined, RocketOutlined, ArrowLeftOutlined } from '@ant-design/icons-vue'
@@ -12,7 +12,7 @@ const route = useRoute()
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
 
-const appId = ref<string>(String(route.params.id))
+const appId = ref<number>(Number(route.params.id))
 const appInfo = ref<API.AppVO | null>(null)
 const loading = ref(false)
 
@@ -30,6 +30,97 @@ const previewUrl = ref('')
 const deployLoading = ref(false)
 const deployedUrl = ref('')
 
+const buildPreviewUrl = () => {
+  const codeGenType = appInfo.value?.codeGenType
+  if (!codeGenType) return ''
+  const indexPath = codeGenType === 'vue_project' ? 'dist/index.html' : 'index.html'
+  return `http://localhost:8123/api/static/${codeGenType}_${appId.value}/${indexPath}`
+}
+
+const streamChat = async (prompt: string, onAppend: (delta: string) => void, onDone: () => void) => {
+  const response = await fetch(
+    `http://localhost:8123/api/app/chat/gen/code?appId=${appId.value}&message=${encodeURIComponent(prompt)}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+        Accept: 'text/event-stream',
+        'Cache-Control': 'no-cache',
+      },
+    },
+  )
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => '')
+    throw new Error(errorText || `请求失败（${response.status}）`)
+  }
+
+  const reader = response.body?.getReader()
+  if (!reader) {
+    throw new Error('无法读取响应流')
+  }
+
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let currentEventName = 'message'
+  let currentDataLines: string[] = []
+
+  const dispatchEvent = () => {
+    const data = currentDataLines.join('\n').trim()
+    const eventName = currentEventName || 'message'
+    currentEventName = 'message'
+    currentDataLines = []
+
+    if (eventName === 'done') {
+      onDone()
+      return
+    }
+
+    if (!data || data === 'null' || data === '[DONE]') return
+
+    try {
+      const json = JSON.parse(data)
+      const delta = json?.d ?? json?.data ?? json?.message ?? ''
+      if (delta) onAppend(String(delta))
+    } catch {
+      onAppend(data)
+    }
+  }
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+    const parts = buffer.split('\n')
+    buffer = parts.pop() ?? ''
+
+    for (const rawLine of parts) {
+      const line = rawLine.replace(/\r$/, '')
+      if (!line) {
+        if (currentDataLines.length > 0 || currentEventName !== 'message') {
+          dispatchEvent()
+        }
+        continue
+      }
+
+      if (line.startsWith('event:')) {
+        currentEventName = line.replace(/^event:\s*/, '').trim() || 'message'
+        continue
+      }
+
+      if (line.startsWith('data:')) {
+        currentDataLines.push(line.replace(/^data:\s*/, ''))
+      }
+    }
+  }
+
+  if (currentDataLines.length > 0 || currentEventName !== 'message') {
+    dispatchEvent()
+  }
+}
+
 const fetchAppInfo = async () => {
   loading.value = true
   try {
@@ -38,8 +129,7 @@ const fetchAppInfo = async () => {
       appInfo.value = res.data.data
       if (appInfo.value.isHistory===true) {
         listAppChatHistory({
-          appId: appInfo.value.id,
-          current: 1,
+          appId: appInfo.value.id ?? appId.value,
           pageSize: 10,
         }).then((res) => {
           const ans = res.data.data?.records || []
@@ -47,16 +137,17 @@ const fetchAppInfo = async () => {
             if (item.messageType === 'user') {
               messages.value.push({
                 role: 'user',
-                content: item.message,
+                content: item.message ?? '',
               })
             } else if (item.messageType === 'ai') {
               messages.value.push({
                 role: 'assistant',
-                content: item.message,
+                content: item.message ?? '',
               })
             }
           })
-          previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/index.html`
+          const url = buildPreviewUrl()
+          if (url) previewUrl.value = url
           showPreview.value = true
           scrollToBottom()
         })
@@ -83,65 +174,20 @@ const fetchAppInfo = async () => {
 const sendInitialMessage = async (prompt: string) => {
   sending.value = true
   try {
-    const response = await fetch(
-      `http://localhost:8123/api/app/chat/gen/code?appId=${appId.value}&message=${encodeURIComponent(prompt)}`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
+    messages.value.push({ role: 'assistant', content: '' })
+    const assistantMessage = messages.value[messages.value.length - 1]
+    await streamChat(
+      prompt,
+      (delta) => {
+        assistantMessage.content += delta
+        scrollToBottomImmediate()
+      },
+      () => {
+        showPreview.value = true
+        const url = buildPreviewUrl()
+        if (url) previewUrl.value = url
       },
     )
-
-    if (!response.ok) {
-      throw new Error('请求失败')
-    }
-
-    const reader = response.body?.getReader()
-    const decoder = new TextDecoder()
-
-    if (!reader) {
-      throw new Error('无法读取响应流')
-    }
-
-    messages.value.push({
-      role: 'assistant',
-      content: '',
-    })
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      const chunk = decoder.decode(value)
-      const lines = chunk.split('\n')
-
-      let currentEvent = 'message'
-
-      for (const line of lines) {
-        if (line.startsWith('event:')) {
-          currentEvent = line.replace(/^event:\s*/, '')
-          continue
-        }
-
-        if (!line.startsWith('data:')) continue
-
-        const data = line.replace(/^data:\s*/, '')
-
-        if (currentEvent === 'done') {
-          showPreview.value = true
-          //http://localhost:8123/api/static/html_2011763874621632512/index.html
-          previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/index.html`
-          continue
-        }
-
-        if (data && data !== 'null') {
-          const json = JSON.parse(data)
-          messages.value[messages.value.length - 1].content += json.d
-          scrollToBottomImmediate()
-        }
-      }
-    }
   } catch (error) {
     message.error('对话失败，请稍后重试')
     messages.value.pop()
@@ -173,73 +219,20 @@ const handleSendMessage = async () => {
 
   sending.value = true
   try {
-    const response = await fetch(
-      `http://localhost:8123/api/app/chat/gen/code?appId=${appId.value}&message=${encodeURIComponent(userMessage)}`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
+    messages.value.push({ role: 'assistant', content: '' })
+    const assistantMessage = messages.value[messages.value.length - 1]
+    await streamChat(
+      userMessage,
+      (delta) => {
+        assistantMessage.content += delta
+        scrollToBottomImmediate()
+      },
+      () => {
+        showPreview.value = true
+        const url = buildPreviewUrl()
+        if (url) previewUrl.value = url
       },
     )
-
-    if (!response.ok) {
-      throw new Error('请求失败')
-    }
-
-    const reader = response.body?.getReader()
-    const decoder = new TextDecoder()
-
-    if (!reader) {
-      throw new Error('无法读取响应流')
-    }
-
-    messages.value.push({
-      role: 'assistant',
-      content: '',
-    })
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      const chunk = decoder.decode(value)
-      const lines = chunk.split('\n')
-
-      let currentEvent = 'message'
-
-      for (const line of lines) {
-        if (line.startsWith('event:')) {
-          currentEvent = line.replace(/^event:\s*/, '')
-          continue
-        }
-
-        if (!line.startsWith('data:')) continue
-
-        const data = line.replace(/^data:\s*/, '')
-
-        if (currentEvent === 'done') {
-          showPreview.value = true
-          previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/index.html`
-          continue
-        }
-
-        if (data && data !== 'null') {
-          try {
-            const json = JSON.parse(data)
-            if (json.d) {
-              messages.value[messages.value.length - 1].content += json.d
-              scrollToBottomImmediate()
-            }
-          } catch (e) {
-            if (data !== '[DONE]') {
-              messages.value[messages.value.length - 1].content += data
-              scrollToBottomImmediate()
-            }
-          }
-        }
-      }
-    }
   } catch (error) {
     message.error('对话失败，请稍后重试')
     messages.value.pop()
@@ -275,7 +268,9 @@ const handleDeploy = async () => {
     if (res.data.code === 0 && res.data.data) {
       message.success('部署成功')
       deployedUrl.value = res.data.data
-      window.open(deployedUrl.value, '_blank')
+      // 确保URL格式正确，避免路径拼接错误
+      const baseUrl = deployedUrl.value.endsWith('/') ? deployedUrl.value.slice(0, -1) : deployedUrl.value
+      window.open(`${baseUrl}/index.html`, '_blank')
     } else {
       message.error(res.data.message || '部署失败')
     }

@@ -7,14 +7,33 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.io.File;
+
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
     @Autowired
     private JwtInterceptor jwtInterceptor;
 
-    private static final String PREVIEW_ROOT_DIR =
+    private static final String CODE_OUTPUT_DIR =
             System.getProperty("user.dir") + "/tmp/code_output/";
+    private static final String CODE_DEPLOY_DIR =
+            System.getProperty("user.dir") + "/tmp/code_deploy/";
+
+    public WebConfig() {
+        // 确保两个目录都存在
+        File outputDir = new File(CODE_OUTPUT_DIR);
+        File deployDir = new File(CODE_DEPLOY_DIR);
+        
+        if (!outputDir.exists()) {
+            outputDir.mkdirs();
+            System.out.println("Created code_output directory: " + CODE_OUTPUT_DIR);
+        }
+        if (!deployDir.exists()) {
+            deployDir.mkdirs();
+            System.out.println("Created code_deploy directory: " + CODE_DEPLOY_DIR);
+        }
+    }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -47,10 +66,21 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        System.out.println("Static preview dir = " + PREVIEW_ROOT_DIR);
+        System.out.println("Code output dir = " + CODE_OUTPUT_DIR);
+        System.out.println("Code deploy dir = " + CODE_DEPLOY_DIR);
 
+        // 同时注册两个目录的静态资源映射
+        registry.addResourceHandler("/static/output/**")
+                .addResourceLocations("file:" + CODE_OUTPUT_DIR)
+                .setCachePeriod(0); // 开发期关闭缓存
+        
+        registry.addResourceHandler("/static/deploy/**")
+                .addResourceLocations("file:" + CODE_DEPLOY_DIR)
+                .setCachePeriod(0); // 开发期关闭缓存
+        
+        // 保持原有的 /static/** 映射指向 code_output 目录（向后兼容）
         registry.addResourceHandler("/static/**")
-                .addResourceLocations("file:" + PREVIEW_ROOT_DIR)
+                .addResourceLocations("file:" + CODE_OUTPUT_DIR)
                 .setCachePeriod(0); // 开发期关闭缓存
     }
 

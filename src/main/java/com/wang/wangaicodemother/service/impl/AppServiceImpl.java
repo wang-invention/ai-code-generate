@@ -179,7 +179,12 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         //将生成的app复制到部署目录下面
         String deployKey = app.getDeployKey();
         if (StrUtil.isBlank(deployKey)) {
-            deployKey = RandomUtil.randomString(6);
+            // 生成6位字母数字随机字符串作为部署键
+            deployKey = RandomUtil.randomStringUpper(6);
+        }
+        // 验证部署键格式（只允许字母和数字）
+        if (!deployKey.matches("^[A-Za-z0-9]+$")) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "部署键格式不正确");
         }
         //获取代码生成类型，构建目录
         String codeType = app.getCodeGenType();
