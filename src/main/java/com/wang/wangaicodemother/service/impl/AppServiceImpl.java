@@ -23,6 +23,7 @@ import com.wang.wangaicodemother.model.vo.AppVO;
 import com.wang.wangaicodemother.model.vo.UserVO;
 import com.wang.wangaicodemother.service.AppService;
 import com.wang.wangaicodemother.service.ChatHistoryService;
+import com.wang.wangaicodemother.service.ScreenshotService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -61,6 +62,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     @Resource
     private VueProjectBuilder vueProjectBuilder;
+
+    @Resource
+    private ScreenshotService screenshotService;
 
 
     /**
@@ -227,9 +231,26 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         if (!result) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "更新应用状态失败");
         }
-        //返回部署目录
-        return String.format("%s/%s", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        String appDeployUrl = String.format("%s/%s", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        //异步生成网站封面截图，更新应用封面
+        //todo:检查这个生成目录是否有效
+        generateAppScreenshotAsync(appId,appDeployUrl);
+        return appDeployUrl;
     }
 
 
+    public void generateAppScreenshotAsync(Long appId, String appDeployUrl) {
+        Thread.startVirtualThread(() -> {
+            //生成截图,返回url
+            String url = screenshotService.generateAndUploadScreenshot(appDeployUrl);
+            //更新数据库的封面
+            App update = new App();
+            update.setId(appId);
+            update.setCover(url);
+            boolean result = this.updateById(update);
+            if (!result) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "更新应用封面失败");
+            }
+        });
+    }
 }
