@@ -12,14 +12,19 @@ const router = useRouter()
 const route = useRoute()
 const isReady = ref(false)
 
+
+const goLogin = () => {
+  router.push('/user/login')
+}
+
 router.isReady().then(() => {
   isReady.value = true
 })
 
 const filteredMenuItems = computed(() => {
   if (!menuItems) return []
-  
-  return menuItems.filter(item => {
+
+  return menuItems.filter((item) => {
     if (item.key === 'app-manage') {
       return loginUserStore.loginUser.userRole === 'admin'
     }
@@ -29,12 +34,14 @@ const filteredMenuItems = computed(() => {
 
 const selectedKeys = computed(() => {
   if (!isReady.value) return []
-  const menuItem = filteredMenuItems.value?.find(item => 'path' in item && item.path === route.path)
+  const menuItem = filteredMenuItems.value?.find(
+    (item) => 'path' in item && item.path === route.path,
+  )
   return menuItem ? [menuItem.key as string] : []
 })
 
 const handleMenuClick = ({ key }: { key: string }) => {
-  const menuItem = filteredMenuItems.value?.find(item => item?.key === key)
+  const menuItem = filteredMenuItems.value?.find((item) => item?.key === key)
   if (menuItem && 'path' in menuItem && menuItem.path) {
     router.push(menuItem.path as string)
   }
@@ -98,11 +105,7 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
       <div class="header-right">
         <div v-if="loginUserStore.loginUser.id" class="user-section">
           <a-dropdown :trigger="['click']" placement="bottomRight">
-            <a-avatar 
-              :src="loginUserStore.loginUser?.userAvatar" 
-              :size="40"
-              class="user-avatar"
-            >
+            <a-avatar :src="loginUserStore.loginUser?.userAvatar" :size="40" class="user-avatar">
               {{ loginUserStore.loginUser?.userName?.charAt(0) ?? 'U' }}
             </a-avatar>
             <template #overlay>
@@ -111,7 +114,7 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
           </a-dropdown>
         </div>
         <div v-else>
-          <a-button type="primary" class="login-button">登录</a-button>
+          <a-button type="primary" class="login-button" @click="goLogin">登录 </a-button>
         </div>
       </div>
     </div>
@@ -158,13 +161,15 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
   font-size: 18px;
   font-weight: 600;
   color: #1a1a1a;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .header-menu {
   border-bottom: none;
   background: transparent;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .user-section {
@@ -180,7 +185,8 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
   color: #666;
   font-weight: 500;
   font-size: 16px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .user-avatar:hover {
@@ -195,7 +201,8 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
   padding: 0 24px;
   border-radius: 8px;
   font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 :deep(.ant-dropdown-menu) {
@@ -211,7 +218,8 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
   margin: 2px 8px;
   border-radius: 6px;
   transition: all 0.2s;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 :deep(.ant-dropdown-menu-item:hover) {

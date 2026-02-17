@@ -12,7 +12,7 @@ const route = useRoute()
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
 
-const appId = ref<number>(Number(route.params.id))
+const appId = ref<string>(route.params.id)
 const appInfo = ref<API.AppVO | null>(null)
 const loading = ref(false)
 

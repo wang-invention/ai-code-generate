@@ -35,7 +35,7 @@ declare namespace API {
   }
 
   type AppVO = {
-    id?: number
+    id?: string
     appName?: string
     cover?: string
     initPrompt?: string
@@ -144,7 +144,7 @@ declare namespace API {
   }
 
   type getAppVOByIdByAdminParams = {
-    id: number
+    id: string
   }
 
   type getAppVOByIdParams = {
