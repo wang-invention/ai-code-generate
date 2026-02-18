@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { SendOutlined, RocketOutlined, ArrowLeftOutlined, DownloadOutlined } from '@ant-design/icons-vue'
-import { getAppVoById, deployApp, downloadAppCode } from '@/api/appController'
+import { SendOutlined, RocketOutlined, ArrowLeftOutlined } from '@ant-design/icons-vue'
+import { getAppVoById, deployApp, listGoodAppVoByPage } from '@/api/appController'
 import { useLoginUserStore } from '@/stores/LoginUser'
 import { marked } from 'marked'
 import { listAppChatHistory } from '@/api/chatHistoryController.ts'
@@ -12,13 +12,13 @@ const route = useRoute()
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
 
-const rawAppId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
-const appId = ref<string>(rawAppId)
+const appId = ref<string>(String(route.params.id))
 const appInfo = ref<API.AppVO | null>(null)
 const loading = ref(false)
 
 const messages = ref<Array<{ role: 'user' | 'assistant'; content: string }>>([])
 const inputMessage = ref('')
+const sending = ref(false)
 const messagesContainer = ref<HTMLElement | null>(null)
 
 const renderMarkdown = (content: string) => {
@@ -28,99 +28,7 @@ const renderMarkdown = (content: string) => {
 const showPreview = ref(false)
 const previewUrl = ref('')
 const deployLoading = ref(false)
-const downloadLoading = ref(false)
 const deployedUrl = ref('')
-
-const buildPreviewUrl = () => {
-  const codeGenType = appInfo.value?.codeGenType
-  if (!codeGenType) return ''
-  const indexPath = codeGenType === 'vue_project' ? 'dist/index.html' : 'index.html'
-  return `http://localhost:8123/api/static/${codeGenType}_${appId.value}/${indexPath}`
-}
-
-const streamChat = async (prompt: string, onAppend: (delta: string) => void, onDone: () => void) => {
-  const response = await fetch(
-    `http://localhost:8123/api/app/chat/gen/code?appId=${appId.value}&message=${encodeURIComponent(prompt)}`,
-    {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
-        Accept: 'text/event-stream',
-        'Cache-Control': 'no-cache',
-      },
-    },
-  )
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => '')
-    throw new Error(errorText || `请求失败（${response.status}）`)
-  }
-
-  const reader = response.body?.getReader()
-  if (!reader) {
-    throw new Error('无法读取响应流')
-  }
-
-  const decoder = new TextDecoder()
-  let buffer = ''
-  let currentEventName = 'message'
-  let currentDataLines: string[] = []
-
-  const dispatchEvent = () => {
-    const data = currentDataLines.join('\n').trim()
-    const eventName = currentEventName || 'message'
-    currentEventName = 'message'
-    currentDataLines = []
-
-    if (eventName === 'done') {
-      onDone()
-      return
-    }
-
-    if (!data || data === 'null' || data === '[DONE]') return
-
-    try {
-      const json = JSON.parse(data)
-      const delta = json?.d ?? json?.data ?? json?.message ?? ''
-      if (delta) onAppend(String(delta))
-    } catch {
-      onAppend(data)
-    }
-  }
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-
-    buffer += decoder.decode(value, { stream: true })
-    const parts = buffer.split('\n')
-    buffer = parts.pop() ?? ''
-
-    for (const rawLine of parts) {
-      const line = rawLine.replace(/\r$/, '')
-      if (!line) {
-        if (currentDataLines.length > 0 || currentEventName !== 'message') {
-          dispatchEvent()
-        }
-        continue
-      }
-
-      if (line.startsWith('event:')) {
-        currentEventName = line.replace(/^event:\s*/, '').trim() || 'message'
-        continue
-      }
-
-      if (line.startsWith('data:')) {
-        currentDataLines.push(line.replace(/^data:\s*/, ''))
-      }
-    }
-  }
-
-  if (currentDataLines.length > 0 || currentEventName !== 'message') {
-    dispatchEvent()
-  }
-}
 
 const fetchAppInfo = async () => {
   loading.value = true
@@ -128,9 +36,10 @@ const fetchAppInfo = async () => {
     const res = await getAppVoById({ id: appId.value })
     if (res.data.code === 0 && res.data.data) {
       appInfo.value = res.data.data
-      if (appInfo.value.isHistory===true) {
+      if (appInfo.value.isHistory === true) {
         listAppChatHistory({
-          appId: appInfo.value.id ?? appId.value,
+          appId: appInfo.value.id,
+          current: 1,
           pageSize: 10,
         }).then((res) => {
           const ans = res.data.data?.records || []
@@ -138,17 +47,16 @@ const fetchAppInfo = async () => {
             if (item.messageType === 'user') {
               messages.value.push({
                 role: 'user',
-                content: item.message ?? '',
+                content: item.message,
               })
             } else if (item.messageType === 'ai') {
               messages.value.push({
                 role: 'assistant',
-                content: item.message ?? '',
+                content: item.message,
               })
             }
           })
-          const url = buildPreviewUrl()
-          if (url) previewUrl.value = url
+          getPreViewUrl()
           showPreview.value = true
           scrollToBottom()
         })
@@ -173,27 +81,86 @@ const fetchAppInfo = async () => {
 }
 
 const sendInitialMessage = async (prompt: string) => {
+  sending.value = true
   try {
-    messages.value.push({ role: 'assistant', content: '' })
-    const assistantMessage = messages.value[messages.value.length - 1]!
-    await streamChat(
-      prompt,
-      (delta) => {
-        assistantMessage.content += delta
-        scrollToBottomImmediate()
-      },
-      () => {
-        showPreview.value = true
-        const url = buildPreviewUrl()
-        if (url) previewUrl.value = url
+    const response = await fetch(
+      `http://localhost:8123/api/app/chat/gen/code?appId=${appId.value}&message=${encodeURIComponent(prompt)}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       },
     )
+
+    if (!response.ok) {
+      throw new Error('请求失败')
+    }
+
+    const reader = response.body?.getReader()
+    const decoder = new TextDecoder()
+
+    if (!reader) {
+      throw new Error('无法读取响应流')
+    }
+
+    messages.value.push({
+      role: 'assistant',
+      content: '',
+    })
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      const chunk = decoder.decode(value)
+      const lines = chunk.split('\n')
+
+      let currentEvent = 'message'
+
+      for (const line of lines) {
+        if (line.startsWith('event:')) {
+          currentEvent = line.replace(/^event:\s*/, '')
+          continue
+        }
+
+        if (!line.startsWith('data:')) continue
+
+        const data = line.replace(/^data:\s*/, '')
+
+        if (currentEvent === 'done') {
+          showPreview.value = true
+          //http://localhost:8123/api/static/html_2011763874621632512/index.html
+          previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/dist/index.html`
+          continue
+        }
+
+        if (data && data !== 'null') {
+          const json = JSON.parse(data)
+          messages.value[messages.value.length - 1].content += json.d
+          scrollToBottomImmediate()
+        }
+      }
+    }
   } catch (error) {
     message.error('对话失败，请稍后重试')
     messages.value.pop()
+  } finally {
+    sending.value = false
   }
 }
 
+function getPreViewUrl() {
+  if (appInfo.value?.codeGenType === 'html' || appInfo.value?.codeGenType === 'multi_file') {
+    previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/index.html`
+  } else {
+    previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/dist/index.html`
+  }
+}
+
+/**
+ * 初始发送消息
+ */
 const handleSendMessage = async () => {
   if (!inputMessage.value.trim()) {
     message.warning('请输入消息')
@@ -215,24 +182,83 @@ const handleSendMessage = async () => {
   scrollToBottom()
   scrollToBottomImmediate()
 
+  sending.value = true
   try {
-    messages.value.push({ role: 'assistant', content: '' })
-    const assistantMessage = messages.value[messages.value.length - 1]!
-    await streamChat(
-      userMessage,
-      (delta) => {
-        assistantMessage.content += delta
-        scrollToBottomImmediate()
-      },
-      () => {
-        showPreview.value = true
-        const url = buildPreviewUrl()
-        if (url) previewUrl.value = url
+    const response = await fetch(
+      `http://localhost:8123/api/app/chat/gen/code?appId=${appId.value}&message=${encodeURIComponent(userMessage)}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       },
     )
+
+    if (!response.ok) {
+      throw new Error('请求失败')
+    }
+
+    const reader = response.body?.getReader()
+    const decoder = new TextDecoder()
+
+    if (!reader) {
+      throw new Error('无法读取响应流')
+    }
+
+    messages.value.push({
+      role: 'assistant',
+      content: '',
+    })
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      const chunk = decoder.decode(value)
+      const lines = chunk.split('\n')
+
+      let currentEvent = 'message'
+
+      for (const line of lines) {
+        if (line.startsWith('event:')) {
+          currentEvent = line.replace(/^event:\s*/, '')
+          continue
+        }
+
+        if (!line.startsWith('data:')) continue
+
+        const data = line.replace(/^data:\s*/, '')
+
+        if (currentEvent === 'done') {
+          showPreview.value = true
+          console.log(appInfo.value?.codeGenType)
+          //获取不同模式下的预览地址
+          getPreViewUrl()
+          console.log('previewUrl', previewUrl.value)
+          continue
+        }
+
+        if (data && data !== 'null') {
+          try {
+            const json = JSON.parse(data)
+            if (json.d) {
+              messages.value[messages.value.length - 1].content += json.d
+              scrollToBottomImmediate()
+            }
+          } catch (e) {
+            if (data !== '[DONE]') {
+              messages.value[messages.value.length - 1].content += data
+              scrollToBottomImmediate()
+            }
+          }
+        }
+      }
+    }
   } catch (error) {
     message.error('对话失败，请稍后重试')
     messages.value.pop()
+  } finally {
+    sending.value = false
   }
 }
 
@@ -259,13 +285,11 @@ const handleDeploy = async () => {
 
   deployLoading.value = true
   try {
-    const res = await deployApp({ appId: Number(appId.value) })
+    const res = await deployApp({ appId: appId.value })
     if (res.data.code === 0 && res.data.data) {
       message.success('部署成功')
       deployedUrl.value = res.data.data
-      // 确保URL格式正确，避免路径拼接错误
-      const baseUrl = deployedUrl.value.endsWith('/') ? deployedUrl.value.slice(0, -1) : deployedUrl.value
-      window.open(`${baseUrl}`, '_blank')
+      window.open(deployedUrl.value, '_blank')
     } else {
       message.error(res.data.message || '部署失败')
     }
@@ -273,48 +297,6 @@ const handleDeploy = async () => {
     message.error('部署失败，请稍后重试')
   } finally {
     deployLoading.value = false
-  }
-}
-
-const handleDownload = async () => {
-  if (!loginUserStore.isLogin) {
-    message.warning('请先登录')
-    router.push('/user/login')
-    return
-  }
-
-  downloadLoading.value = true
-  try {
-    const res = await downloadAppCode(
-      { appId: appId.value },
-      { responseType: 'blob' },
-    )
-    if (res.data) {
-      const blob = new Blob([res.data], { type: 'application/zip' })
-      const contentDisposition = res.headers['content-disposition']
-      let fileName = 'app_code.zip'
-      if (contentDisposition) {
-        const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/)
-        if (fileNameMatch && fileNameMatch.length === 2) {
-          fileName = fileNameMatch[1]
-        }
-      }
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = fileName
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-      message.success('下载成功')
-    } else {
-      message.error('下载失败')
-    }
-  } catch (error) {
-    message.error('下载失败，请稍后重试')
-  } finally {
-    downloadLoading.value = false
   }
 }
 
@@ -342,17 +324,6 @@ onMounted(() => {
         <h2 class="app-name">{{ appInfo?.appName || '未命名应用' }}</h2>
       </div>
       <div class="header-right">
-        <a-button
-          class="download-button"
-          :loading="downloadLoading"
-          @click="handleDownload"
-          style="margin-right: 12px"
-        >
-          <template #icon>
-            <DownloadOutlined />
-          </template>
-          下载代码
-        </a-button>
         <a-button
           type="primary"
           :loading="deployLoading"
@@ -383,6 +354,16 @@ onMounted(() => {
                 <div class="message-text" v-html="renderMarkdown(msg.content)"></div>
               </div>
             </div>
+            <div v-if="sending" class="message-item assistant-message">
+              <div class="message-content">
+                <div class="message-role">AI</div>
+                <div class="message-text typing">
+                  <span class="typing-dot"></span>
+                  <span class="typing-dot"></span>
+                  <span class="typing-dot"></span>
+                </div>
+              </div>
+            </div>
           </div>
         </a-spin>
 
@@ -391,11 +372,12 @@ onMounted(() => {
             v-model:value="inputMessage"
             placeholder="输入消息继续对话..."
             size="large"
+            :loading="sending"
             @search="handleSendMessage"
             class="message-input"
           >
             <template #enterButton>
-              <a-button type="primary" size="large" class="send-button">
+              <a-button type="primary" size="large" :loading="sending" class="send-button">
                 <template #icon>
                   <SendOutlined />
                 </template>
@@ -470,11 +452,6 @@ onMounted(() => {
 .deploy-button {
   background: #1890ff;
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-.download-button {
   border-radius: 8px;
   font-weight: 600;
 }
@@ -646,6 +623,44 @@ onMounted(() => {
   color: #333;
   border-bottom-left-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0;
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-8px);
+  }
 }
 
 .input-section {

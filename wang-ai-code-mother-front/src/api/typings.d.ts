@@ -35,7 +35,7 @@ declare namespace API {
   }
 
   type AppVO = {
-    id?: number
+    id?: string
     appName?: string
     cover?: string
     initPrompt?: string

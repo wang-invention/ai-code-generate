@@ -194,10 +194,10 @@ const openEditModal = async (record: API.AppVO) => {
   modalVisible.value = true
 
   try {
-    const res = await getAppVoByIdByAdmin({ id: Number(record.id) })
+    const res = await getAppVoByIdByAdmin({ id: record.id })
     if (res.data.code === 0 && res.data.data) {
       const appData = res.data.data
-      appForm.id = appData.id != null ? Number(appData.id) : undefined
+      appForm.id = appData.id != null ? appData.id : undefined
       appForm.appName = appData.appName || ''
       appForm.cover = appData.cover || ''
       appForm.priority = appData.priority || 0
@@ -263,7 +263,7 @@ const handleDelete = (record: API.AppVO) => {
     okButtonProps: { danger: true },
     onOk: async () => {
       try {
-        const res = await deleteAppByAdmin({ id: Number(record.id) })
+        const res = await deleteAppByAdmin({ id: record.id })
         if (res.data.code === 0) {
           message.success('删除成功')
           if (tableData.value.length === 1 && currentPage.value > 1) {
@@ -289,7 +289,7 @@ const handleSetFeatured = async (record: API.AppVO) => {
     onOk: async () => {
       try {
         const res = await updateAppByAdmin({
-          id: Number(record.id),
+          id: record.id,
           appName: record.appName,
           cover: record.cover,
           priority: 99
@@ -317,7 +317,7 @@ const handleRemoveFeatured = async (record: API.AppVO) => {
     onOk: async () => {
       try {
         const res = await updateAppByAdmin({
-          id: Number(record.id),
+          id: record.id,
           appName: record.appName,
           cover: record.cover,
           priority: 0
@@ -351,7 +351,7 @@ const handleBatchDelete = () => {
     onOk: async () => {
       try {
         const promises = selectedRows.value.map((row: API.AppVO) =>
-          deleteAppByAdmin({ id: Number(row.id) })
+          deleteAppByAdmin({ id: row.id })
         )
         await Promise.all(promises)
         message.success(`成功删除 ${selectedRowKeys.value.length} 个应用`)
@@ -380,7 +380,7 @@ const handleBatchSetFeatured = () => {
       try {
         const promises = selectedRows.value.map((row: API.AppVO) =>
           updateAppByAdmin({
-            id: Number(row.id),
+            id: row.id,
             appName: row.appName,
             cover: row.cover,
             priority: 99
@@ -413,7 +413,7 @@ const handleBatchRemoveFeatured = () => {
       try {
         const promises = selectedRows.value.map((row: API.AppVO) =>
           updateAppByAdmin({
-            id: Number(row.id),
+            id: row.id,
             appName: row.appName,
             cover: row.cover,
             priority: 0
