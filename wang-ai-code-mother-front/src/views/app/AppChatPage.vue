@@ -2,8 +2,8 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { SendOutlined, RocketOutlined, ArrowLeftOutlined } from '@ant-design/icons-vue'
-import { getAppVoById, deployApp } from '@/api/appController'
+import { SendOutlined, RocketOutlined, ArrowLeftOutlined, DownloadOutlined } from '@ant-design/icons-vue'
+import { getAppVoById, deployApp, downloadAppCode } from '@/api/appController'
 import { useLoginUserStore } from '@/stores/LoginUser'
 import { marked } from 'marked'
 import { listAppChatHistory } from '@/api/chatHistoryController.ts'
@@ -28,6 +28,7 @@ const renderMarkdown = (content: string) => {
 const showPreview = ref(false)
 const previewUrl = ref('')
 const deployLoading = ref(false)
+const downloadLoading = ref(false)
 const deployedUrl = ref('')
 
 const buildPreviewUrl = () => {
@@ -258,7 +259,7 @@ const handleDeploy = async () => {
 
   deployLoading.value = true
   try {
-    const res = await deployApp({ appId: appId.value })
+    const res = await deployApp({ appId: Number(appId.value) })
     if (res.data.code === 0 && res.data.data) {
       message.success('部署成功')
       deployedUrl.value = res.data.data
@@ -272,6 +273,48 @@ const handleDeploy = async () => {
     message.error('部署失败，请稍后重试')
   } finally {
     deployLoading.value = false
+  }
+}
+
+const handleDownload = async () => {
+  if (!loginUserStore.isLogin) {
+    message.warning('请先登录')
+    router.push('/user/login')
+    return
+  }
+
+  downloadLoading.value = true
+  try {
+    const res = await downloadAppCode(
+      { appId: appId.value },
+      { responseType: 'blob' },
+    )
+    if (res.data) {
+      const blob = new Blob([res.data], { type: 'application/zip' })
+      const contentDisposition = res.headers['content-disposition']
+      let fileName = 'app_code.zip'
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/)
+        if (fileNameMatch && fileNameMatch.length === 2) {
+          fileName = fileNameMatch[1]
+        }
+      }
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      message.success('下载成功')
+    } else {
+      message.error('下载失败')
+    }
+  } catch (error) {
+    message.error('下载失败，请稍后重试')
+  } finally {
+    downloadLoading.value = false
   }
 }
 
@@ -299,6 +342,17 @@ onMounted(() => {
         <h2 class="app-name">{{ appInfo?.appName || '未命名应用' }}</h2>
       </div>
       <div class="header-right">
+        <a-button
+          class="download-button"
+          :loading="downloadLoading"
+          @click="handleDownload"
+          style="margin-right: 12px"
+        >
+          <template #icon>
+            <DownloadOutlined />
+          </template>
+          下载代码
+        </a-button>
         <a-button
           type="primary"
           :loading="deployLoading"
@@ -416,6 +470,11 @@ onMounted(() => {
 .deploy-button {
   background: #1890ff;
   border: none;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.download-button {
   border-radius: 8px;
   font-weight: 600;
 }
