@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, nextTick, computed, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { SendOutlined, RocketOutlined, ArrowLeftOutlined, DownloadOutlined, InfoCircleOutlined } from '@ant-design/icons-vue'
+import { SendOutlined, RocketOutlined, ArrowLeftOutlined, DownloadOutlined, InfoCircleOutlined, EditOutlined, CloseOutlined } from '@ant-design/icons-vue'
 import { getAppVoById, deployApp, listGoodAppVoByPage, downloadAppCode } from '@/api/appController'
 import { useLoginUserStore } from '@/stores/LoginUser'
 import { marked } from 'marked'
 import { listAppChatHistory } from '@/api/chatHistoryController.ts'
+import { VisualEditor, type ElementInfo } from '@/hooks/useVisualEditor'
 
 const route = useRoute()
 const router = useRouter()
@@ -29,6 +30,69 @@ const showPreview = ref(false)
 const previewUrl = ref('')
 const deployLoading = ref(false)
 const deployedUrl = ref('')
+
+const isEditMode = ref(false)
+const selectedElement = ref<ElementInfo | null>(null)
+const iframeRef = ref<HTMLIFrameElement | null>(null)
+const visualEditor = ref<VisualEditor | null>(null)
+
+const toggleEditMode = () => {
+  if (visualEditor.value) {
+    isEditMode.value = visualEditor.value.toggleEditMode()
+  }
+}
+
+const disableEditMode = () => {
+  if (visualEditor.value) {
+    visualEditor.value.disableEditMode()
+    isEditMode.value = false
+  }
+}
+
+const clearSelection = () => {
+  if (visualEditor.value) {
+    visualEditor.value.clearSelection()
+    selectedElement.value = null
+  }
+}
+
+const initVisualEditor = () => {
+  visualEditor.value = new VisualEditor({
+    onElementSelected: (info: ElementInfo) => {
+      selectedElement.value = info
+    },
+    onElementHover: (info: ElementInfo) => {
+      // console.log('hover', info)
+    }
+  })
+}
+
+watch(iframeRef, (newVal) => {
+  if (newVal && visualEditor.value) {
+    visualEditor.value.init(newVal)
+  }
+})
+
+const onIframeLoad = () => {
+  if (visualEditor.value) {
+    visualEditor.value.onIframeLoad()
+  }
+}
+
+const handleIframeMessage = (event: MessageEvent) => {
+  if (visualEditor.value) {
+    visualEditor.value.handleIframeMessage(event)
+  }
+}
+
+onMounted(() => {
+  initVisualEditor()
+  window.addEventListener('message', handleIframeMessage)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('message', handleIframeMessage)
+})
 
 const fetchAppInfo = async () => {
   loading.value = true
@@ -175,18 +239,29 @@ const handleSendMessage = async () => {
   }
 
   const userMessage = inputMessage.value.trim()
+  let prompt = userMessage
+  
+  if (selectedElement.value) {
+    prompt += `\n\n【用户选中元素信息】\n标签: ${selectedElement.value.tagName}\n文本: ${selectedElement.value.textContent}\n选择器: ${selectedElement.value.selector}\n页面路径: ${selectedElement.value.pagePath}`
+    if (selectedElement.value.id) prompt += `\nID: ${selectedElement.value.id}`
+    if (selectedElement.value.className) prompt += `\nClass: ${selectedElement.value.className}`
+  }
+
   messages.value.push({
     role: 'user',
-    content: userMessage,
+    content: userMessage, // Display original user message in chat
   })
   inputMessage.value = ''
   scrollToBottom()
   scrollToBottomImmediate()
 
+  // Exit edit mode after sending
+  disableEditMode()
+
   sending.value = true
   try {
     const response = await fetch(
-      `http://localhost:5173/api/app/chat/gen/code?appId=${appId.value}&message=${encodeURIComponent(userMessage)}`,
+      `http://localhost:5173/api/app/chat/gen/code?appId=${appId.value}&message=${encodeURIComponent(prompt)}`,
       {
         method: 'GET',
         headers: {
@@ -455,23 +530,57 @@ onMounted(() => {
         </a-spin>
 
         <div class="input-section">
-          <a-input-search
-            v-model:value="inputMessage"
-            placeholder="输入消息继续对话..."
-            size="large"
-            :loading="sending"
-            @search="handleSendMessage"
-            class="message-input"
-          >
-            <template #enterButton>
-              <a-button type="primary" size="large" :loading="sending" class="send-button">
+          <div v-if="selectedElement" class="selected-element-alert">
+            <a-alert
+              type="info"
+              show-icon
+              closable
+              @close="clearSelection"
+            >
+              <template #message>
+                <span class="alert-title">已选中元素: &lt;{{ selectedElement.tagName }}&gt;</span>
+              </template>
+              <template #description>
+                <div class="alert-desc">
+                  文本: {{ selectedElement.textContent }}
+                </div>
+              </template>
+            </a-alert>
+          </div>
+          <div class="input-wrapper">
+            <a-textarea
+              v-model:value="inputMessage"
+              placeholder="输入消息继续对话..."
+              :auto-size="{ minRows: 1, maxRows: 4 }"
+              class="custom-textarea"
+              @keydown.enter.prevent="handleSendMessage"
+            />
+            <div class="action-buttons">
+              <a-tooltip :title="isEditMode ? '退出编辑模式' : '进入编辑模式'">
+                <a-button 
+                  :type="isEditMode ? 'primary' : 'default'" 
+                  :danger="isEditMode"
+                  class="action-btn edit-btn" 
+                  @click="toggleEditMode"
+                >
+                  <template #icon>
+                    <EditOutlined />
+                  </template>
+                </a-button>
+              </a-tooltip>
+              <a-button 
+                type="primary" 
+                :loading="sending" 
+                class="action-btn send-btn"
+                @click="handleSendMessage"
+              >
                 <template #icon>
                   <SendOutlined />
                 </template>
                 发送
               </a-button>
-            </template>
-          </a-input-search>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -481,7 +590,13 @@ onMounted(() => {
             <h3>网站预览</h3>
           </div>
           <div class="preview-iframe">
-            <iframe :src="previewUrl" frameborder="0" class="preview-frame"></iframe>
+            <iframe 
+              ref="iframeRef"
+              :src="previewUrl" 
+              frameborder="0" 
+              class="preview-frame"
+              @load="onIframeLoad"
+            ></iframe>
           </div>
         </div>
         <div v-else class="preview-placeholder">
@@ -792,24 +907,83 @@ onMounted(() => {
 }
 
 .input-section {
-  padding: 16px 24px;
-  background: #ffffff;
-  border-top: 1px solid #e8e8e8;
   position: sticky;
   bottom: 0;
   z-index: 10;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #ffffff;
+  padding: 16px 24px;
+  border-top: 1px solid #e8e8e8;
 }
 
-.message-input {
+.selected-element-alert {
+  margin-bottom: 8px;
+}
+
+.alert-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.alert-desc {
+  font-size: 12px;
+  color: #666;
+  max-height: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  background: #f5f5f5;
+  padding: 8px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.send-button {
-  border-radius: 0 12px 12px 0;
-  background: #1890ff;
+.custom-textarea {
+  flex: 1;
+  background: transparent;
   border: none;
+  box-shadow: none;
+  padding: 8px 12px;
+  font-size: 14px;
+  resize: none;
+}
+
+.custom-textarea:focus {
+  box-shadow: none;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 4px;
+}
+
+.action-btn {
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.send-btn {
+  padding: 0 16px;
+  height: 32px;
   font-weight: 600;
 }
 
@@ -877,6 +1051,15 @@ onMounted(() => {
   .preview-section {
     flex: 1;
     border-left: none;
+    border-top: 1px solid #e8e8e8;
+  }
+
+  .input-section {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
     border-top: 1px solid #e8e8e8;
   }
 }
