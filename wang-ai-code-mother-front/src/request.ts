@@ -3,7 +3,7 @@ import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/LoginUser'
 
 const request = axios.create({
-  baseURL: 'http://localhost:8123/api',
+  baseURL: 'http://localhost:5173/api',
   timeout: 60000,
   withCredentials: true,
 })

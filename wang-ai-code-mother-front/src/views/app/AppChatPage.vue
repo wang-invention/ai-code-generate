@@ -2,8 +2,8 @@
 import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { SendOutlined, RocketOutlined, ArrowLeftOutlined } from '@ant-design/icons-vue'
-import { getAppVoById, deployApp, listGoodAppVoByPage } from '@/api/appController'
+import { SendOutlined, RocketOutlined, ArrowLeftOutlined, DownloadOutlined, InfoCircleOutlined } from '@ant-design/icons-vue'
+import { getAppVoById, deployApp, listGoodAppVoByPage, downloadAppCode } from '@/api/appController'
 import { useLoginUserStore } from '@/stores/LoginUser'
 import { marked } from 'marked'
 import { listAppChatHistory } from '@/api/chatHistoryController.ts'
@@ -84,7 +84,7 @@ const sendInitialMessage = async (prompt: string) => {
   sending.value = true
   try {
     const response = await fetch(
-      `http://localhost:8123/api/app/chat/gen/code?appId=${appId.value}&message=${encodeURIComponent(prompt)}`,
+      `http://localhost:5173/api/app/chat/gen/code?appId=${appId.value}&message=${encodeURIComponent(prompt)}`,
       {
         method: 'GET',
         headers: {
@@ -130,8 +130,8 @@ const sendInitialMessage = async (prompt: string) => {
 
         if (currentEvent === 'done') {
           showPreview.value = true
-          //http://localhost:8123/api/static/html_2011763874621632512/index.html
-          previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/dist/index.html`
+          //http://localhost:5173/api/static/html_2011763874621632512/index.html
+          getPreViewUrl()
           continue
         }
 
@@ -152,10 +152,11 @@ const sendInitialMessage = async (prompt: string) => {
 
 function getPreViewUrl() {
   if (appInfo.value?.codeGenType === 'html' || appInfo.value?.codeGenType === 'multi_file') {
-    previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/index.html`
+    previewUrl.value = `http://localhost:5173/api/static/${appInfo.value?.codeGenType}_${appId.value}/index.html`
   } else {
-    previewUrl.value = `http://localhost:8123/api/static/${appInfo.value?.codeGenType}_${appId.value}/dist/index.html`
+    previewUrl.value = `http://localhost:5173/api/static/${appInfo.value?.codeGenType}_${appId.value}/dist/index.html`
   }
+  console.log("previewUrl"+previewUrl.value)
 }
 
 /**
@@ -185,7 +186,7 @@ const handleSendMessage = async () => {
   sending.value = true
   try {
     const response = await fetch(
-      `http://localhost:8123/api/app/chat/gen/code?appId=${appId.value}&message=${encodeURIComponent(userMessage)}`,
+      `http://localhost:5173/api/app/chat/gen/code?appId=${appId.value}&message=${encodeURIComponent(userMessage)}`,
       {
         method: 'GET',
         headers: {
@@ -276,6 +277,73 @@ const scrollToBottomImmediate = () => {
   }
 }
 
+const downloadLoading = ref(false)
+
+const handleDownload = async () => {
+  if (!loginUserStore.isLogin) {
+    message.warning('请先登录')
+    router.push('/user/login')
+    return
+  }
+
+  downloadLoading.value = true
+  try {
+    const res = await downloadAppCode({ appId: appId.value }, { responseType: 'blob' })
+    if (res.data) {
+      const blob = new Blob([res.data], { type: 'application/zip' })
+      const contentDisposition = res.headers['content-disposition']
+      let fileName = 'app_code.zip'
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/)
+        if (fileNameMatch && fileNameMatch.length >= 2) {
+          fileName = fileNameMatch[1]
+        }
+      }
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      message.success('下载成功')
+    } else {
+      message.error('下载失败')
+    }
+  } catch (error) {
+    message.error('下载失败，请稍后重试')
+  } finally {
+    downloadLoading.value = false
+  }
+}
+
+const showDetail = ref(false)
+const showDetailModal = () => {
+  showDetail.value = true
+}
+
+const getCodeGenTypeLabel = (codeGenType?: string) => {
+  if (codeGenType === 'html') {
+    return 'HTML 网站'
+  } else if (codeGenType === 'multi_file') {
+    return '多文件应用'
+  }
+  return codeGenType
+}
+
+const formatDate = (isoString?: string) => {
+  if (!isoString) return ''
+  const date = new Date(isoString)
+  const year = date.getFullYear()
+  const month = (date.getMonth() + 1).toString().padStart(2, '0')
+  const day = date.getDate().toString().padStart(2, '0')
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  const seconds = date.getSeconds().toString().padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
 const handleDeploy = async () => {
   if (!loginUserStore.isLogin) {
     message.warning('请先登录')
@@ -322,8 +390,27 @@ onMounted(() => {
           </template>
         </a-button>
         <h2 class="app-name">{{ appInfo?.appName || '未命名应用' }}</h2>
+        <a-tag v-if="appInfo?.codeGenType" color="blue" style="margin-left: 12px">
+          {{ getCodeGenTypeLabel(appInfo.codeGenType) }}
+        </a-tag>
       </div>
       <div class="header-right">
+        <a-button type="text" @click="showDetailModal" class="detail-button" style="margin-right: 12px">
+          <template #icon>
+            <InfoCircleOutlined />
+          </template>
+        </a-button>
+        <a-button
+          class="download-button"
+          :loading="downloadLoading"
+          @click="handleDownload"
+          style="margin-right: 12px"
+        >
+          <template #icon>
+            <DownloadOutlined />
+          </template>
+          下载代码
+        </a-button>
         <a-button
           type="primary"
           :loading="deployLoading"
@@ -402,10 +489,46 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <a-modal v-model:open="showDetail" title="应用详情" :footer="null" width="800px">
+      <a-descriptions bordered :column="{ xs: 1, sm: 2, md: 2 }">
+        <a-descriptions-item label="应用名称">
+          {{ appInfo?.appName }}
+        </a-descriptions-item>
+        <a-descriptions-item label="生成类型">
+          <a-tag v-if="appInfo?.codeGenType" color="blue">
+            {{ getCodeGenTypeLabel(appInfo.codeGenType) }}
+          </a-tag>
+        </a-descriptions-item>
+        <a-descriptions-item label="创建时间">
+          {{ formatDate(appInfo?.createTime) }}
+        </a-descriptions-item>
+        <a-descriptions-item label="更新时间">
+          {{ formatDate(appInfo?.updateTime) }}
+        </a-descriptions-item>
+        <a-descriptions-item label="初始提示词" :span="2" v-if="appInfo?.initPrompt">
+          <div class="prompt-content">
+            {{ appInfo.initPrompt }}
+          </div>
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-modal>
   </div>
 </template>
 
 <style scoped>
+.prompt-content {
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  color: #333;
+}
+
 .app-chat-container {
   display: flex;
   flex-direction: column;
@@ -447,6 +570,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.download-button {
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 .deploy-button {
