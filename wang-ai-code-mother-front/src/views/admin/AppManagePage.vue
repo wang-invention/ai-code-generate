@@ -18,7 +18,6 @@ import {
   getAppVoByIdByAdmin
 } from '@/api/appController'
 import { useLoginUserStore } from '@/stores/LoginUser'
-import type { API } from '@/api/typings.d'
 
 const loginUserStore = useLoginUserStore()
 
@@ -28,13 +27,13 @@ const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
 
-const selectedRowKeys = ref<string[]>([])
+const selectedRowKeys = ref<Array<string | number>>([])
 const selectedRows = ref<API.AppVO[]>([])
 
 const searchForm = reactive({
   appName: '',
   codeGenType: '',
-  userId: undefined as string | undefined,
+  userId: undefined as number | undefined,
   priority: undefined as number | undefined
 })
 
@@ -43,7 +42,7 @@ const modalTitle = ref('编辑应用')
 const modalLoading = ref(false)
 
 const appForm = reactive({
-  id: undefined as string | undefined,
+  id: undefined as number | undefined,
   appName: '',
   cover: '',
   priority: 0
@@ -125,9 +124,9 @@ const columns = [
 const rowSelection = computed(() => {
   return {
     selectedRowKeys: selectedRowKeys.value,
-    onChange: (selectedKeys: number[], selectedRows: API.AppVO[]) => {
+    onChange: (selectedKeys: Array<string | number>, rows: API.AppVO[]) => {
       selectedRowKeys.value = selectedKeys
-      selectedRows.value = selectedRows
+      selectedRows.value = rows
     }
   }
 })
@@ -195,10 +194,10 @@ const openEditModal = async (record: API.AppVO) => {
   modalVisible.value = true
 
   try {
-    const res = await getAppVoByIdByAdmin({ id: record.id! })
+    const res = await getAppVoByIdByAdmin({ id: Number(record.id) })
     if (res.data.code === 0 && res.data.data) {
       const appData = res.data.data
-      appForm.id = appData.id
+      appForm.id = appData.id != null ? Number(appData.id) : undefined
       appForm.appName = appData.appName || ''
       appForm.cover = appData.cover || ''
       appForm.priority = appData.priority || 0
@@ -264,7 +263,7 @@ const handleDelete = (record: API.AppVO) => {
     okButtonProps: { danger: true },
     onOk: async () => {
       try {
-        const res = await deleteAppByAdmin({ id: record.id })
+        const res = await deleteAppByAdmin({ id: Number(record.id) })
         if (res.data.code === 0) {
           message.success('删除成功')
           if (tableData.value.length === 1 && currentPage.value > 1) {
@@ -290,7 +289,7 @@ const handleSetFeatured = async (record: API.AppVO) => {
     onOk: async () => {
       try {
         const res = await updateAppByAdmin({
-          id: record.id,
+          id: Number(record.id),
           appName: record.appName,
           cover: record.cover,
           priority: 99
@@ -318,7 +317,7 @@ const handleRemoveFeatured = async (record: API.AppVO) => {
     onOk: async () => {
       try {
         const res = await updateAppByAdmin({
-          id: record.id,
+          id: Number(record.id),
           appName: record.appName,
           cover: record.cover,
           priority: 0
@@ -351,8 +350,8 @@ const handleBatchDelete = () => {
     okButtonProps: { danger: true },
     onOk: async () => {
       try {
-        const promises = selectedRows.value.map(row => 
-          deleteAppByAdmin({ id: row.id })
+        const promises = selectedRows.value.map((row: API.AppVO) =>
+          deleteAppByAdmin({ id: Number(row.id) })
         )
         await Promise.all(promises)
         message.success(`成功删除 ${selectedRowKeys.value.length} 个应用`)
@@ -379,9 +378,9 @@ const handleBatchSetFeatured = () => {
     cancelText: '取消',
     onOk: async () => {
       try {
-        const promises = selectedRows.value.map(row => 
+        const promises = selectedRows.value.map((row: API.AppVO) =>
           updateAppByAdmin({
-            id: row.id,
+            id: Number(row.id),
             appName: row.appName,
             cover: row.cover,
             priority: 99
@@ -412,9 +411,9 @@ const handleBatchRemoveFeatured = () => {
     cancelText: '取消',
     onOk: async () => {
       try {
-        const promises = selectedRows.value.map(row => 
+        const promises = selectedRows.value.map((row: API.AppVO) =>
           updateAppByAdmin({
-            id: row.id,
+            id: Number(row.id),
             appName: row.appName,
             cover: row.cover,
             priority: 0
@@ -544,7 +543,7 @@ onMounted(() => {
           total: total,
           showSizeChanger: true,
           showQuickJumper: true,
-          showTotal: (total) => `共 ${total} 条`,
+          showTotal: (total: number) => `共 ${total} 条`,
           onChange: handlePageChange
         }"
         :row-selection="loading ? null : rowSelection"

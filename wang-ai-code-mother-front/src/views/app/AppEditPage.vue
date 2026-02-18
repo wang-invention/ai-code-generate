@@ -5,18 +5,18 @@ import { message } from 'ant-design-vue'
 import { ArrowLeftOutlined } from '@ant-design/icons-vue'
 import { getAppVoById, updateApp } from '@/api/appController'
 import { useLoginUserStore } from '@/stores/LoginUser'
-import type { API } from '@/api/typings.d'
 
 const route = useRoute()
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
 
-const appId = ref<string>(String(route.params.id))
+const rawAppId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+const appId = ref<number>(Number(rawAppId))
 const loading = ref(false)
 const saving = ref(false)
 
 const appForm = reactive({
-  id: undefined as string | undefined,
+  id: undefined as number | undefined,
   appName: '',
   cover: ''
 })
@@ -36,7 +36,7 @@ const fetchAppInfo = async () => {
         return
       }
 
-      appForm.id = appData.id
+      appForm.id = appData.id != null ? Number(appData.id) : undefined
       appForm.appName = appData.appName || ''
       appForm.cover = appData.cover || ''
 
@@ -66,7 +66,7 @@ const handleSave = async () => {
 
     if (res.data.code === 0) {
       message.success('保存成功')
-      router.push('/app/chat/' + appId.value)
+      router.push('/app/chat/' + String(appId.value))
     } else {
       message.error(res.data.message || '保存失败')
     }
@@ -78,7 +78,7 @@ const handleSave = async () => {
 }
 
 const goBack = () => {
-  router.push('/app/chat/' + appId.value)
+  router.push('/app/chat/' + String(appId.value))
 }
 
 onMounted(() => {

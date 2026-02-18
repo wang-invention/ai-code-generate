@@ -12,13 +12,13 @@ const route = useRoute()
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
 
-const appId = ref<string>(route.params.id)
+const rawAppId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+const appId = ref<string>(rawAppId)
 const appInfo = ref<API.AppVO | null>(null)
 const loading = ref(false)
 
 const messages = ref<Array<{ role: 'user' | 'assistant'; content: string }>>([])
 const inputMessage = ref('')
-const sending = ref(false)
 const messagesContainer = ref<HTMLElement | null>(null)
 
 const renderMarkdown = (content: string) => {
@@ -172,10 +172,9 @@ const fetchAppInfo = async () => {
 }
 
 const sendInitialMessage = async (prompt: string) => {
-  sending.value = true
   try {
     messages.value.push({ role: 'assistant', content: '' })
-    const assistantMessage = messages.value[messages.value.length - 1]
+    const assistantMessage = messages.value[messages.value.length - 1]!
     await streamChat(
       prompt,
       (delta) => {
@@ -191,8 +190,6 @@ const sendInitialMessage = async (prompt: string) => {
   } catch (error) {
     message.error('对话失败，请稍后重试')
     messages.value.pop()
-  } finally {
-    sending.value = false
   }
 }
 
@@ -217,10 +214,9 @@ const handleSendMessage = async () => {
   scrollToBottom()
   scrollToBottomImmediate()
 
-  sending.value = true
   try {
     messages.value.push({ role: 'assistant', content: '' })
-    const assistantMessage = messages.value[messages.value.length - 1]
+    const assistantMessage = messages.value[messages.value.length - 1]!
     await streamChat(
       userMessage,
       (delta) => {
@@ -236,8 +232,6 @@ const handleSendMessage = async () => {
   } catch (error) {
     message.error('对话失败，请稍后重试')
     messages.value.pop()
-  } finally {
-    sending.value = false
   }
 }
 
@@ -335,16 +329,6 @@ onMounted(() => {
                 <div class="message-text" v-html="renderMarkdown(msg.content)"></div>
               </div>
             </div>
-            <div v-if="sending" class="message-item assistant-message">
-              <div class="message-content">
-                <div class="message-role">AI</div>
-                <div class="message-text typing">
-                  <span class="typing-dot"></span>
-                  <span class="typing-dot"></span>
-                  <span class="typing-dot"></span>
-                </div>
-              </div>
-            </div>
           </div>
         </a-spin>
 
@@ -353,12 +337,11 @@ onMounted(() => {
             v-model:value="inputMessage"
             placeholder="输入消息继续对话..."
             size="large"
-            :loading="sending"
             @search="handleSendMessage"
             class="message-input"
           >
             <template #enterButton>
-              <a-button type="primary" size="large" :loading="sending" class="send-button">
+              <a-button type="primary" size="large" class="send-button">
                 <template #icon>
                   <SendOutlined />
                 </template>
@@ -604,44 +587,6 @@ onMounted(() => {
   color: #333;
   border-bottom-left-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.typing {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 0;
-}
-
-.typing-dot {
-  width: 8px;
-  height: 8px;
-  background: currentColor;
-  border-radius: 50%;
-  animation: typing 1.4s infinite ease-in-out;
-}
-
-.typing-dot:nth-child(1) {
-  animation-delay: 0s;
-}
-
-.typing-dot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing-dot:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes typing {
-  0%,
-  60%,
-  100% {
-    transform: translateY(0);
-  }
-  30% {
-    transform: translateY(-8px);
-  }
 }
 
 .input-section {

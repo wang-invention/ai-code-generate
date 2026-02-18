@@ -18,6 +18,7 @@ const formState = reactive({
   id: undefined as number | undefined,
   userName: '',
   userAvatar: '',
+  userProfile: '',
   phone: '',
   email: ''
 })
@@ -116,8 +117,7 @@ const handleSubmit = async () => {
       id: formState.id,
       userName: formState.userName,
       userAvatar: formState.userAvatar,
-      phone: formState.phone,
-      email: formState.email
+      userProfile: formState.userProfile
     })
 
     if (res.data.code === 0) {
@@ -127,8 +127,7 @@ const handleSubmit = async () => {
         ...loginUserStore.loginUser,
         userName: formState.userName,
         userAvatar: formState.userAvatar,
-        phone: formState.phone,
-        email: formState.email
+        userProfile: formState.userProfile
       }
       loginUserStore.setLoginUser(updatedUser)
 

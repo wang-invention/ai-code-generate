@@ -313,7 +313,6 @@ public class AppController {
         //查询对话历史表
         QueryWrapper query = QueryWrapper.create()
                 .eq("appId", id);
-        System.err.println(id);
 
         AppVO appVO = appService.getAppVO(app);
         List<ChatHistory> list = chatHistoryService.list(query);

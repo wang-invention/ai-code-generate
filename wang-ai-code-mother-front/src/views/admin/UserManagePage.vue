@@ -15,7 +15,6 @@ import {
   deleteUser,
   getUserVoById
 } from '@/api/userController'
-import type { API } from '@/api/typings.d'
 
 const loading = ref(false)
 const tableData = ref<API.UserVO[]>([])
@@ -341,7 +340,7 @@ onMounted(() => {
           total: total,
           showSizeChanger: true,
           showQuickJumper: true,
-          showTotal: (total) => `共 ${total} 条`,
+          showTotal: (total: number) => `共 ${total} 条`,
           onChange: handlePageChange
         }"
         :scroll="{ x: 1200 }"

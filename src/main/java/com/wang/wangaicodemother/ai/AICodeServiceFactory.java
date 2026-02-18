@@ -56,7 +56,7 @@ public class AICodeServiceFactory {
         log.info("创建新的AI服务实例{}", appId);
         MessageWindowChatMemory chatMemory = MessageWindowChatMemory.builder()
                 .id(appId)
-                .maxMessages(10)
+                .maxMessages(35)
                 .chatMemoryStore(redisChatMemoryStore)
                 .build();
         //从数据库加载历史对话

@@ -59,6 +59,7 @@ public class ChatHistoryController {
                                                               @RequestParam(required = false) LocalDateTime lastCreateTime,
                                                               HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
+        System.err.println("appId: " + appId);
         //校验权限
         App app = appService.getById(appId);
         if (!app.getUserId().equals(loginUser.getId())) {

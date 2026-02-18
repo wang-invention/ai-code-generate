@@ -318,7 +318,7 @@ onMounted(() => {
           :total="goodAppsTotal"
           :show-size-changer="false"
           :show-quick-jumper="true"
-          :show-total="(total) => `共 ${total} 条`"
+          :show-total="(total: number) => `共 ${total} 条`"
           @change="handleGoodAppsPageChange"
         />
       </div>
@@ -362,7 +362,7 @@ onMounted(() => {
             </div>
             <div v-else-if="myApps.length === 0" class="empty-state">
               <a-empty description="暂无应用，快来创建一个吧！">
-                <a-button type="primary" @click="promptInput = examplePrompts[0].prompt">
+                <a-button type="primary" @click="promptInput = examplePrompts[0]?.prompt ?? ''">
                   从示例开始
                 </a-button>
               </a-empty>
@@ -408,7 +408,7 @@ onMounted(() => {
           :total="myAppsTotal"
           :show-size-changer="false"
           :show-quick-jumper="true"
-          :show-total="(total) => `共 ${total} 条`"
+          :show-total="(total: number) => `共 ${total} 条`"
           @change="handleMyAppsPageChange"
         />
       </div>
