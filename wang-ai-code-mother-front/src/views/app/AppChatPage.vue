@@ -264,7 +264,7 @@ const handleDeploy = async () => {
       deployedUrl.value = res.data.data
       // 确保URL格式正确，避免路径拼接错误
       const baseUrl = deployedUrl.value.endsWith('/') ? deployedUrl.value.slice(0, -1) : deployedUrl.value
-      window.open(`${baseUrl}/index.html`, '_blank')
+      window.open(`${baseUrl}`, '_blank')
     } else {
       message.error(res.data.message || '部署失败')
     }

@@ -231,10 +231,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         if (!result) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "更新应用状态失败");
         }
-        String appDeployUrl = String.format("%s/%s", AppConstant.CODE_DEPLOY_HOST, deployKey);
-        //异步生成网站封面截图，更新应用封面
-        //todo:检查这个生成目录是否有效
-        generateAppScreenshotAsync(appId,appDeployUrl);
+        String appDeployUrl = String.format("%s/%s/index.html", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        //异步生成截图
+        generateAppScreenshotAsync(appId, appDeployUrl);
         return appDeployUrl;
     }
 

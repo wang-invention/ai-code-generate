@@ -103,7 +103,7 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
             queryWrapper.orderBy(sortField, "ascend".equals(sortOrder));
         } else {
             // 默认按创建时间降序排列
-            queryWrapper.orderBy("createTime", false);
+            queryWrapper.orderBy("createTime", true);
         }
         return queryWrapper;
     }
