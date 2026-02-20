@@ -2,7 +2,7 @@ package com.wang.wangaicodemother.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.wang.wangaicodemother.ai.tool.FileWriteTool;
+import com.wang.wangaicodemother.manager.ToolManager;
 import com.wang.wangaicodemother.enums.CodeGenTypeEnum;
 import com.wang.wangaicodemother.exception.BusinessException;
 import com.wang.wangaicodemother.exception.ErrorCode;
@@ -38,6 +38,9 @@ public class AICodeServiceFactory {
     @Resource
     private ChatHistoryService chatHistoryService;
 
+    @Resource
+    private ToolManager toolManager;
+
 
     private final Cache<String, Assistant> serviceCache = Caffeine.newBuilder()
             .maximumSize(1000)
@@ -65,7 +68,7 @@ public class AICodeServiceFactory {
             case VUE_PROJECT -> AiServices.builder(Assistant.class)
                     .streamingChatModel(reasoningStreamingChatModel)
                     .chatMemoryProvider(memoryId -> chatMemory)
-                    .tools(new FileWriteTool())
+                    .tools(toolManager.getAllTools())
                     .hallucinatedToolNameStrategy(toolExecutionRequest ->
                             ToolExecutionResultMessage.from(toolExecutionRequest,
                                     "Error:there is no tool called" + toolExecutionRequest.name())
@@ -94,6 +97,7 @@ public class AICodeServiceFactory {
 
     /**
      * 构建缓存key
+     *
      * @param appId
      * @param codeGenTypeEnum
      * @return
