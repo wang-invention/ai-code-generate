@@ -38,7 +38,6 @@ knife4j:
   enable: true
   setting:
     language: zh_cn
-
 jwt:
   while-list:
     - /api/user/login
