@@ -1,4 +1,4 @@
-# Wang AI Code Mother Front
+# Wang AI Code Mother 
 
 基于 Vue 3 + Vite + TypeScript 的 AI 代码生成平台前端项目。该项目提供了一个可视化的界面，允许用户通过自然语言与 AI 进行交互，生成、预览并可视化编辑网站代码。
 
@@ -104,5 +104,6 @@ npm run openapi2ts
 欢迎提交 Issue 和 Pull Request 来改进本项目！
 
 ## 📄 许可证
+
 
 [MIT](LICENSE)
