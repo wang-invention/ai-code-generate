@@ -11,6 +11,9 @@ import java.util.Date;
 
 public class JwtUtil {
 
+
+
+
     // HS256 对称加密 key，长度 >= 256 bit（32 字节）
     private static final String SECRET = "wangfaming666wangfaming666wangfaming66"; // 最少32个字符
     private static final Key KEY = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
