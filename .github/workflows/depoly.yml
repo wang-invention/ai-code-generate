@@ -1,0 +1,64 @@
+name: CI/CD
+
+# 触发条件：当 main 分支有 push 或 pull request 时触发
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 拉取代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. 设置 JDK
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # 3. 编译打包 JAR
+      - name: Build JAR
+        run: mvn clean package -DskipTests
+
+      # 4. 构建 Docker 镜像
+      - name: Build Docker image
+        run: docker build -t wang-ai-code-mother:latest .
+
+      # 5. 登录 Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 6. 推送镜像到 Docker Hub
+      - name: Push Docker image
+        run: |
+          docker tag wang-ai-code-mother:latest wangfaming666/ai-generate-code:latest
+          docker push wangfaming666/ai-generate-code:latest
+
+      # 7. SSH 到服务器部署
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            docker pull wangfaming666/ai-generate-code:latest
+            docker stop ai-code-mother || true
+            docker rm ai-code-mother || true
+            docker run -d \
+              -p 8123:8123 \
+              -v /opt/wang-ai-code-mother/application-prod.yml:/app/config/application.yml \
+              -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              --name ai-code-mother \
+              yourdockerhubid/wang-ai-code-mother:latest \
+              --spring.config.location=/app/config/application.yml

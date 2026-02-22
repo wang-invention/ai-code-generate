@@ -42,4 +42,3 @@ jwt:
   while-list:
     - /api/user/login
     - /api/user/register
-  secret: wangfaming666wangfaming666wangfaming66
