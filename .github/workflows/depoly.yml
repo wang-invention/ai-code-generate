@@ -1,6 +1,6 @@
 name: CI/CD
 
-# 触发条件：当 main 分支有 push 或 pull request 时触发
+# 触发条件：master分支推送时触发
 on:
   push:
     branches:
@@ -15,50 +15,58 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. 设置 JDK
+      # 2. 设置 JDK 21
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
 
-      # 3. 编译打包 JAR
+      # 3. Maven 编译打包（跳过测试）
       - name: Build JAR
         run: mvn clean package -DskipTests
 
-      # 4. 构建 Docker 镜像
+      # 4. 构建 Docker 镜像（打私有仓库标签）
       - name: Build Docker image
-        run: docker build -f ./docker/Dockerfile -t wang-ai-code-mother:latest .
+        run: docker build -f ./docker/Dockerfile -t 172.19.177.18:5000/ai-generate-code:latest .
 
-      # 5. 登录 Docker Hub
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+      # 5. 登录 Docker Hub（若私有仓库无需登录可注释，仅推送DockerHub时需要）
+      # - name: Log in to Docker Hub
+      #   uses: docker/login-action@v2
+      #   with:
+      #     username: ${{ secrets.DOCKER_USERNAME }}
+      #     password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 6. 推送镜像到 Docker Hub
-      - name: Push Docker image
+      # 6. 推送镜像到阿里云ECS私有仓库（核心：推到内网仓库）
+      - name: Push Docker image to private registry
         run: |
-          docker tag wang-ai-code-mother:latest wangfaming666/ai-generate-code:latest
-          docker push wangfaming666/ai-generate-code:latest
+          # 确保GitHub Runner能访问你的私有仓库（需配置insecure-registries）
+          echo "{\"insecure-registries\":[\"http://172.19.177.18:5000\"]}" | sudo tee /etc/docker/daemon.json
+          sudo systemctl restart docker
+          # 推送镜像到私有仓库
+          docker push 172.19.177.18:5000/ai-generate-code:latest
 
-      # 7. SSH 到服务器部署
-      - name: Deploy to server
+      # 7. SSH到服务器部署（修正镜像地址+环境变量传递）
+      - name: Deploy to Aliyun ECS
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          # 传递环境变量：用SSH脚本接收secrets并赋值
+          envs: DB_PASSWORD,JWT_SECRET
           script: |
-            docker pull wangfaming666/ai-generate-code:latest
+            # 拉取私有仓库镜像
+            docker pull 172.19.177.18:5000/ai-generate-code:latest
+            # 停止并删除旧容器（不存在则忽略）
             docker stop ai-code-mother || true
             docker rm ai-code-mother || true
+            # 启动新容器（用私有仓库镜像+传递环境变量）
             docker run -d \
               -p 8123:8123 \
               -v /opt/wang-ai-code-mother/application-prod.yml:/app/config/application.yml \
-              -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}" \
-              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e SPRING_DATASOURCE_PASSWORD="${DB_PASSWORD}" \
+              -e JWT_SECRET="${JWT_SECRET}" \
               --name ai-code-mother \
-              yourdockerhubid/wang-ai-code-mother:latest \
+              172.19.177.18:5000/ai-generate-code:latest \
               --spring.config.location=/app/config/application.yml
