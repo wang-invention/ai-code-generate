@@ -28,7 +28,7 @@ jobs:
 
       # 4. 构建 Docker 镜像
       - name: Build Docker image
-        run: docker build -t wang-ai-code-mother:latest .
+        run: docker build -f ./docker/Dockerfile -t wang-ai-code-mother:latest .
 
       # 5. 登录 Docker Hub
       - name: Log in to Docker Hub
