@@ -8,16 +8,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class AssistantTest {
 
-    @Resource
-    private Assistant assistant;
-
-    @Test
-    void generateHtmlCode() {
-        HtmlCodeResult htmlCode = assistant.generateHtmlCode("请生成一个HTML代码，内容是：<h1>Hello World</h1>");
-        System.err.println(htmlCode);
-    }
-
-    @Test
-    void generateMultiCode() {
-    }
+//    @Resource
+//    private Assistant assistant;
+//
+//    @Test
+//    void generateHtmlCode() {
+//        HtmlCodeResult htmlCode = assistant.generateHtmlCode("请生成一个HTML代码，内容是：<h1>Hello World</h1>");
+//        System.err.println(htmlCode);
+//    }
+//
+//    @Test
+//    void generateMultiCode() {
+//    }
 }

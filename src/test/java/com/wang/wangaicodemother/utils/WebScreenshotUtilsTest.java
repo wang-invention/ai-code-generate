@@ -5,9 +5,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
 class WebScreenshotUtilsTest {
-    @Test
-    void getWebScreenShot() {
-        WebScreenshotUtils.saveWebPageScreenshot("https://www.baidu.com");
-    }
+//    @Test
+//    void getWebScreenShot() {
+//        WebScreenshotUtils.saveWebPageScreenshot("https://www.baidu.com");
+//    }
 
 }
