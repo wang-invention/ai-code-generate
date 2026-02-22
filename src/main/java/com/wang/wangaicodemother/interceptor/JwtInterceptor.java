@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -31,8 +30,7 @@ public class JwtInterceptor implements HandlerInterceptor {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    @Value("jwt.secret")
-    private static String SECRET ;
+    private static final String SECRET = "wangfaming666wangfaming666wangfaming66";
 
     private static final Key KEY = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
 
