@@ -31,16 +31,6 @@ jobs:
       - name: Build Docker image
         run: docker build -f ./docker/Dockerfile -t 47.110.3.106:5000/ai-generate-code:latest .
 
-      - name: Upload application-prod.yml to server
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            mkdir -p /opt/wang-ai-code-mother
-            scp target/classes/application-prod.yml user@${{ secrets.SERVER_IP }}:/opt/wang-ai-code-mother/application-prod.yml
-
       # 6. 推送镜像到阿里云ECS私有仓库（核心：推到内网仓库）
       - name: Push Docker image to private registry
         run: |
@@ -49,6 +39,8 @@ jobs:
           sudo systemctl restart docker
           # 推送镜像到私有仓库
           docker push 47.110.3.106:5000/ai-generate-code:latest
+
+  
 
       # 7. SSH到服务器部署（修正镜像地址+环境变量传递）
       - name: Deploy to Aliyun ECS
@@ -60,6 +52,8 @@ jobs:
           # 传递环境变量：用SSH脚本接收secrets并赋值
           envs: DB_PASSWORD,JWT_SECRET
           script: |
+            mkdir -p /opt/wang-ai-code-mother
+            scp -v target/classes/application-prod.yml user@${{ secrets.SERVER_IP }}:/opt/wang-ai-code-mother/application-prod.yml
             # 拉取私有仓库镜像
             docker pull 47.110.3.106:5000/ai-generate-code:latest
             # 停止并删除旧容器（不存在则忽略）
