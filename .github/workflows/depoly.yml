@@ -53,7 +53,7 @@ jobs:
           envs: DB_PASSWORD,JWT_SECRET
           script: |
             mkdir -p /opt/wang-ai-code-mother
-            scp -v target/classes/application-prod.yml user@${{ secrets.SERVER_IP }}:/opt/wang-ai-code-mother/application-prod.yml
+            scp -v $GITHUB_WORKSPACE/src/main/resources/application-prod.yml user@${{ secrets.SERVER_IP }}:/opt/wang-ai-code-mother/application-prod.yml
             # 拉取私有仓库镜像
             docker pull 47.110.3.106:5000/ai-generate-code:latest
             # 停止并删除旧容器（不存在则忽略）
