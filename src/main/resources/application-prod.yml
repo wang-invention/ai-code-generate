@@ -1,13 +1,19 @@
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      database: ${REDIS_DATABASE}
+      ttl: ${REDIS_TTL}
+      username: ${REDIS_USERNAME}
   application:
     name: wang-ai-code-mother
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/wang_ai_code_mother
-    username: root
-    password: '060228'
-  profiles:
-    active: local
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
 server:
   port: 8123
   servlet:
@@ -42,3 +48,33 @@ jwt:
   while-list:
     - /api/user/login
     - /api/user/register
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: ${OPENAI_BASE_URL}
+      api-key: ${OPENAI_API_KEY}
+      model-name: ${OPENAI_MODEL_NAME}
+      log-requests: ${OPENAI_LOG_REQUESTS}
+      log-responses: ${OPENAI_LOG_RESPONSES}
+    streaming-chat-model:
+      base-url: ${OPENAI_BASE_URL}
+      api-key: ${OPENAI_API_KEY}
+      model-name: ${OPENAI_MODEL_NAME}
+      log-requests: ${OPENAI_LOG_REQUESTS}
+      log-responses: ${OPENAI_LOG_RESPONSES}
+
+
+tencent:
+  cos:
+    host: ${TENCENT_COS_HOST}
+    secretId: ${TENCENT_COS_SECRET_ID}
+    secret-key: ${TENCENT_COS_SECRET_KEY}
+    region: ${TENCENT_COS_REGION}
+    bucket: ${TENCENT_COS_BUCKET}
+
+pexels:
+  api-key: ${PEXELS_API_KEY}
+
+dashscope:
+  api-key: ${DASHSCOPE_API_KEY}
+  image-model: ${DASHSCOPE_IMAGE_MODEL}

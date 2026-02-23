@@ -6,6 +6,7 @@ on:
     branches:
       - master
 
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -30,12 +31,15 @@ jobs:
       - name: Build Docker image
         run: docker build -f ./docker/Dockerfile -t 47.110.3.106:5000/ai-generate-code:latest .
 
-      # 5. 登录 Docker Hub（若私有仓库无需登录可注释，仅推送DockerHub时需要）
-      # - name: Log in to Docker Hub
-      #   uses: docker/login-action@v2
-      #   with:
-      #     username: ${{ secrets.DOCKER_USERNAME }}
-      #     password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Upload application-prod.yml to server
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            mkdir -p /opt/wang-ai-code-mother
+            scp target/classes/application-prod.yml user@${{ secrets.SERVER_IP }}:/opt/wang-ai-code-mother/application-prod.yml
 
       # 6. 推送镜像到阿里云ECS私有仓库（核心：推到内网仓库）
       - name: Push Docker image to private registry
