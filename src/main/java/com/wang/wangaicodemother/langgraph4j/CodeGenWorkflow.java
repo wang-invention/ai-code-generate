@@ -1,5 +1,6 @@
 package com.wang.wangaicodemother.langgraph4j;
 
+import com.wang.wangaicodemother.enums.CodeGenTypeEnum;
 import com.wang.wangaicodemother.exception.BusinessException;
 import com.wang.wangaicodemother.exception.ErrorCode;
 import com.wang.wangaicodemother.langgraph4j.node.*;
@@ -16,6 +17,7 @@ import java.util.Map;
 
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
+import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 
 @Slf4j
 public class CodeGenWorkflow {
@@ -38,7 +40,8 @@ public class CodeGenWorkflow {
                     .addEdge("image_collector", "prompt_enhancer")
                     .addEdge("prompt_enhancer", "router")
                     .addEdge("router", "code_generator")
-                    .addEdge("code_generator", "project_builder")
+                    .addConditionalEdges("code_generator", edge_async(this::routeBuildOrSkip),
+                            Map.of("build", "project_builder", "skip_build", END))
                     .addEdge("project_builder", END)
 
                     // 编译工作流
@@ -47,6 +50,18 @@ public class CodeGenWorkflow {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "工作流创建失败");
         }
     }
+
+    private String routeBuildOrSkip(MessagesState<String> state) {
+        WorkflowContext context = WorkflowContext.getContext(state);
+        CodeGenTypeEnum generationType = context.getGenerationType();
+        // HTML 和 MULTI_FILE 类型不需要构建，直接结束
+        if (generationType == CodeGenTypeEnum.HTML || generationType == CodeGenTypeEnum.MULTI_FILE) {
+            return "skip_build";
+        }
+        // VUE_PROJECT 需要构建
+        return "build";
+    }
+
 
     /**
      * 执行工作流

@@ -28,6 +28,12 @@ public class ImageResource implements Serializable {
     private String description;
 
     /**
+     * 质量检查结果
+     */
+    private QualityResult qualityResult;
+
+
+    /**
      * 图片地址
      */
     private String url;

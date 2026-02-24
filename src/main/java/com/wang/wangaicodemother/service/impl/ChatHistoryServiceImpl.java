@@ -36,10 +36,6 @@ import java.util.List;
 @Slf4j
 @Lazy
 public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatHistory> implements ChatHistoryService {
-
-
-
-
     @Override
     public boolean addChatHistoryMessage(String userMessage, Long appId, Long userId, String chatType) {
         if (StrUtil.isBlank(userMessage)) {
