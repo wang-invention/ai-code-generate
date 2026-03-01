@@ -38,9 +38,9 @@ type ArticleRecord = {
 
 const categories = [
   { key: 'all', label: '全部' },
-  { key: 'ai_tech', label: 'AI 技术' },
-  { key: 'industry', label: '行业动态' },
-  { key: 'tools', label: '工具教程' },
+  { key: 'AI 技术', label: 'AI 技术' },
+  { key: '行业动态', label: '行业动态' },
+  { key: '工具教程', label: '工具教程' },
 ]
 
 const activeCategory = ref('all')
