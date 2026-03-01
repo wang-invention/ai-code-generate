@@ -57,3 +57,44 @@ create table chat_history
     INDEX idx_appId_createTime (appId, createTime) -- 游标查询核心索引
 ) comment '对话历史' collate = utf8mb4_unicode_ci;
 
+-- AI文章核心表
+create table if not exists ai_articles
+(
+    id              bigint auto_increment comment '文章唯一标识' primary key,
+    title           varchar(255)                        not null comment '文章标题',
+    source_url      varchar(500)                        null comment '原文链接',
+    source_platform varchar(100)                        null comment '爬取来源平台',
+    author          varchar(100)                        null comment '文章作者',
+    publish_time    datetime                            not null comment '文章发布时间',
+    content         longtext                            null comment '正文内容',
+    category        varchar(50)                         null comment '文章分类',
+    is_featured     tinyint  default 0                  not null comment '是否精选 0=否 1=是',
+    crawl_time      datetime default CURRENT_TIMESTAMP  not null comment '爬取时间',
+    status          varchar(20) default 'normal'        not null comment '状态 normal=正常 down=下架 pending=待审核',
+    unique_key      varchar(64)                         null comment '去重MD5值',
+    views           int      default 0                  not null comment '阅读量',
+    UNIQUE KEY uk_source_url (source_url),
+    UNIQUE KEY uk_unique_key (unique_key),
+    INDEX idx_title (title),
+    INDEX idx_publish_time (publish_time),
+    INDEX idx_category (category),
+    INDEX idx_status (status)
+) comment 'AI文章核心表' collate = utf8mb4_unicode_ci;
+
+-- 爬虫任务日志表
+create table if not exists crawl_task_logs
+(
+    id            bigint auto_increment comment '日志唯一标识' primary key,
+    task_date     date                               not null comment '爬取任务日期',
+    start_time    datetime                           not null comment '任务开始时间',
+    end_time      datetime                           null comment '任务结束时间',
+    total_crawl   int      default 0                 not null comment '当日爬取总数量',
+    success_count int      default 0                 not null comment '成功入库数量',
+    fail_count    int      default 0                 not null comment '失败数量',
+    fail_reason   text                               null comment '失败原因',
+    task_status   varchar(20) default 'running'      not null comment '任务状态 running/finished/failed',
+    operator      varchar(50)                        null comment '执行人 auto=自动',
+    INDEX idx_task_date (task_date),
+    INDEX idx_task_status (task_status)
+) comment '爬虫任务日志表' collate = utf8mb4_unicode_ci;
+

@@ -11,11 +11,6 @@ const menuItems: MenuProps['items'] = [
     path: '/'
   },
   {
-    key: 'courses',
-    label: '课程',
-    path: '/courses'
-  },
-  {
     key: 'articles',
     label: '文章',
     path: '/articles'

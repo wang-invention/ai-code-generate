@@ -43,3 +43,16 @@ jwt:
     - /api/user/login
     - /api/user/register
   secret: wangfaming666wangfaming666wangfaming66
+
+crawler:
+  cron: "0 0 1 * * ?"
+  min-delay-ms: 2000
+  min-content-length: 300
+  max-items-per-source: 50
+  sources:
+    - name: 机器之心
+      rss-url: https://www.jiqizhixin.com/rss
+      category: AI技术
+    - name: 量子位
+      rss-url: https://www.qbitai.com/feed
+      category: 行业动态
