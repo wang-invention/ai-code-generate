@@ -112,7 +112,7 @@ public class JsonMessageStreamHandler {
                 // 根据工具名称获取工具调用信息
                 BaseTool tool = toolManager.getTool(toolName);
                 String output = tool.generateToolExecutedResult(jsonObject);
-                String result=String.format("\n\n%s\n\n",output);
+                String result=String.format("%s",output);
                 chatHistoryStringBuilder.append(result);
                 return result;
             }

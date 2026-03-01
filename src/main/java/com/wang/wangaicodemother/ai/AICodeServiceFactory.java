@@ -7,6 +7,7 @@ import com.wang.wangaicodemother.enums.CodeGenTypeEnum;
 import com.wang.wangaicodemother.exception.BusinessException;
 import com.wang.wangaicodemother.exception.ErrorCode;
 import com.wang.wangaicodemother.service.ChatHistoryService;
+import com.wang.wangaicodemother.utils.SpringContextUtil;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -23,14 +24,8 @@ import java.time.Duration;
 @Configuration
 public class AICodeServiceFactory {
 
-    @Resource
+    @Resource(name = "openAiChatModel")
     private ChatModel chatModel;
-
-    @Resource
-    private StreamingChatModel openAiStreamingChatModel;
-
-    @Resource
-    private StreamingChatModel reasoningStreamingChatModel;
 
     @Resource
     private RedisChatMemoryStore redisChatMemoryStore;
@@ -65,20 +60,28 @@ public class AICodeServiceFactory {
         //从数据库加载历史对话
         chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 20);
         return switch (codeGenType) {
-            case VUE_PROJECT -> AiServices.builder(Assistant.class)
-                    .streamingChatModel(reasoningStreamingChatModel)
-                    .chatMemoryProvider(memoryId -> chatMemory)
-                    .tools(toolManager.getAllTools())
-                    .hallucinatedToolNameStrategy(toolExecutionRequest ->
-                            ToolExecutionResultMessage.from(toolExecutionRequest,
-                                    "Error:there is no tool called" + toolExecutionRequest.name())
-                    )
-                    .build();
-            case MULTI_FILE, HTML -> AiServices.builder(Assistant.class)
-                    .chatModel(chatModel)
-                    .streamingChatModel(openAiStreamingChatModel)
-                    .chatMemory(chatMemory)
-                    .build();
+            //两种模式使用相同的复杂模型
+            case VUE_PROJECT -> {
+                StreamingChatModel streamingChatModel = SpringContextUtil.getBean("reasoningStreamingChatModelPrototype", StreamingChatModel.class);
+                Assistant assistant = AiServices.builder(Assistant.class)
+                        .streamingChatModel(streamingChatModel)
+                        .chatMemoryProvider(memoryId -> chatMemory)
+                        .tools(toolManager.getAllTools())
+                        .hallucinatedToolNameStrategy(toolExecutionRequest ->
+                                ToolExecutionResultMessage.from(toolExecutionRequest,
+                                        "Error:there is no tool called" + toolExecutionRequest.name())
+                        )
+                        .build();
+                yield assistant;
+            }
+            case MULTI_FILE, HTML -> {
+                StreamingChatModel streamingChatModel = SpringContextUtil.getBean("reasoningStreamingChatModelPrototype", StreamingChatModel.class);
+               yield  AiServices.builder(Assistant.class)
+                        .chatModel(chatModel)
+                        .streamingChatModel(streamingChatModel)
+                        .chatMemory(chatMemory)
+                        .build();
+            }
             default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR, "不支持的代码生成类型");
         };
     }

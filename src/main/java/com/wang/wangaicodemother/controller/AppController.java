@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.wang.wangaicodemother.ai.AiCodeGenTypeRoutingService;
+import com.wang.wangaicodemother.ai.AiCodeGenTypeRoutingServiceFactory;
 import com.wang.wangaicodemother.annotation.AuthCheck;
 import com.wang.wangaicodemother.common.BaseResponse;
 import com.wang.wangaicodemother.common.DeleteRequest;
@@ -26,6 +27,7 @@ import com.wang.wangaicodemother.service.AppService;
 import com.wang.wangaicodemother.service.ChatHistoryService;
 import com.wang.wangaicodemother.service.ProjectDownloadService;
 import com.wang.wangaicodemother.service.UserService;
+import com.wang.wangaicodemother.utils.SpringContextUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -62,7 +64,7 @@ public class AppController {
     private ProjectDownloadService projectDownloadService;
 
     @Resource
-    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
+    private AiCodeGenTypeRoutingServiceFactory aiCodeGenTypeRoutingServiceFactory;
 
 
     /**
@@ -409,8 +411,10 @@ public class AppController {
         app.setUserId(loginUser.getId());
         // 应用名称暂时为 initPrompt 前 12 位
         app.setAppName(initPrompt.substring(0, Math.min(initPrompt.length(), 12)));
+        // 获取ai智能路由工厂的实例
+        AiCodeGenTypeRoutingService aiCodeGenTypeRouting = aiCodeGenTypeRoutingServiceFactory.aiCodeGenTypeRoutingService();
         // 使用ai智能路由生成代码生成类型
-        CodeGenTypeEnum routing = aiCodeGenTypeRoutingService.routing(initPrompt);
+        CodeGenTypeEnum routing = aiCodeGenTypeRouting.routing(initPrompt);
         app.setCodeGenType(routing.getValue());
         // 插入数据库
         boolean result = appService.save(app);
