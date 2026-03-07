@@ -115,23 +115,28 @@ public class CrawlerServiceImpl implements CrawlerService {
             result.total++;
             try {
                 if (StrUtil.isBlank(candidate.getTitle()) || StrUtil.isBlank(candidate.getSourceUrl())) {
+                    result.skippedInvalid++;
                     continue;
                 }
                 if (!isAllowed(candidate.getSourceUrl())) {
                     result.fail++;
+                    result.skippedRobots++;
                     result.failReason = source.getName() + " 被 robots 限制：" + candidate.getSourceUrl();
                     continue;
                 }
                 String contentText = candidate.getContent();
                 if (StrUtil.isBlank(contentText)) {
+                    result.skippedNoContent++;
                     contentText = fetchDetailContent(candidate.getSourceUrl(), source);
                 }
                 if (StrUtil.isBlank(contentText) || contentText.length() < crawlerProperties.getMinContentLength()) {
+                    result.skippedShort++;
                     continue;
                 }
                 String summary = contentText.length() > 200 ? contentText.substring(0, 200) : contentText;
                 String uniqueKey = DigestUtil.md5Hex(candidate.getTitle() + summary);
                 if (aiArticleService.existsByUniqueKey(uniqueKey) || aiArticleService.existsBySourceUrl(candidate.getSourceUrl())) {
+                    result.skippedDuplicate++;
                     continue;
                 }
                 AiArticle article = AiArticle.builder()
@@ -156,6 +161,7 @@ public class CrawlerServiceImpl implements CrawlerService {
                 result.failReason = source.getName() + " 入库失败：" + e.getMessage();
             }
         }
+        result.appendSummary(source.getName(), crawlerProperties.getMinContentLength());
         return result;
     }
 
@@ -390,5 +396,27 @@ public class CrawlerServiceImpl implements CrawlerService {
         private int success;
         private int fail;
         private String failReason;
+        private int skippedDuplicate;
+        private int skippedShort;
+        private int skippedRobots;
+        private int skippedInvalid;
+        private int skippedNoContent;
+
+        private void appendSummary(String sourceName, int minLength) {
+            StringBuilder summary = new StringBuilder();
+            summary.append(sourceName).append(" 汇总：");
+            summary.append("total=").append(total)
+                    .append(", success=").append(success)
+                    .append(", fail=").append(fail)
+                    .append(", dup=").append(skippedDuplicate)
+                    .append(", short<").append(minLength).append("=").append(skippedShort)
+                    .append(", robots=").append(skippedRobots)
+                    .append(", invalid=").append(skippedInvalid)
+                    .append(", noContent=").append(skippedNoContent);
+            if (StrUtil.isNotBlank(failReason)) {
+                summary.append(" | lastError=").append(failReason);
+            }
+            failReason = summary.toString();
+        }
     }
 }
