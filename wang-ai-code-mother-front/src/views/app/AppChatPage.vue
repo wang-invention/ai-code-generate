@@ -513,7 +513,8 @@ onMounted(() => {
                 <div class="message-role">
                   {{ msg.role === 'user' ? '你' : 'AI' }}
                 </div>
-                <div class="message-text" v-html="renderMarkdown(msg.content)"></div>
+                <div class="message-text" v-if="msg.role!=='user'" v-html="renderMarkdown(msg.content)"></div>
+                <div class="message-text" v-else v-text="(msg.content)"></div>
               </div>
             </div>
             <div v-if="sending" class="message-item assistant-message">
@@ -635,7 +636,7 @@ onMounted(() => {
 .prompt-content {
   max-height: 300px;
   overflow-y: auto;
-  white-space: pre-wrap;
+  /* white-space: pre-wrap; */
   background: #f5f5f5;
   padding: 12px;
   border-radius: 8px;
@@ -788,11 +789,16 @@ onMounted(() => {
   line-height: 1.6;
   font-size: 14px;
   word-wrap: break-word;
-  white-space: pre-wrap;
+  /* white-space: pre-wrap; */
   overflow-wrap: break-word;
   word-break: break-all;
   min-height: 40px;
 }
+
+.message-text p {
+  margin: 0 !important;
+}
+
 
 .message-text pre {
   background: #f5f5f5;

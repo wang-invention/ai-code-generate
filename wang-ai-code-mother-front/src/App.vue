@@ -36,6 +36,7 @@ onMounted(() => {
 
 html,
 body {
+  scrollbar-width: none;
   height: 100%;
   font-family:
     -apple-system,
