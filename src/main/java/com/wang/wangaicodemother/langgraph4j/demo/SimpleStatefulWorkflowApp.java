@@ -1,4 +1,4 @@
-package com.wang.wangaicodemother.langgraph4j;
+package com.wang.wangaicodemother.langgraph4j.demo;
 
 import com.wang.wangaicodemother.langgraph4j.state.WorkflowContext;
 import lombok.extern.slf4j.Slf4j;

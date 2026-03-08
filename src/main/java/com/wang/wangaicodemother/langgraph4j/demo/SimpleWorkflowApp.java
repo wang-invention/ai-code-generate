@@ -1,4 +1,4 @@
-package com.wang.wangaicodemother.langgraph4j;
+package com.wang.wangaicodemother.langgraph4j.demo;
 
 import lombok.extern.slf4j.Slf4j;
 import org.bsc.langgraph4j.CompiledGraph;

@@ -1,4 +1,4 @@
-package com.wang.wangaicodemother.langgraph4j;
+package com.wang.wangaicodemother.langgraph4j.demo;
 
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.Channels;
@@ -8,6 +8,8 @@ import java.util.*;
 
 // Define the state for our graph
 class SimpleState extends AgentState {
+
+
     public static final String MESSAGES_KEY = "messages";
 
     // Define the schema for the state.

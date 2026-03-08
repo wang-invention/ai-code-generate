@@ -1,10 +1,7 @@
 package com.wang.wangaicodemother.langgraph4j.ai;
 
-import com.wang.wangaicodemother.langgraph4j.state.ImageResource;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
-
-import java.util.List;
 
 /**
  * 图片收集 AI 服务接口

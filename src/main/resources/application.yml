@@ -42,6 +42,7 @@ jwt:
   while-list:
     - /api/user/login
     - /api/user/register
+    - /api/work/flow/execute
   secret: wangfaming666wangfaming666wangfaming66
 
 crawler:
