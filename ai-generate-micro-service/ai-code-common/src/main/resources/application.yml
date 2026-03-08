@@ -1,0 +1,8 @@
+# 自定义腾讯云 COS 配置
+tencent:
+  cos:
+    host: <your-host>
+    secretId: <your-secret-id>
+    secret-key: <your-secret-key>
+    region: <your-region>
+    bucket: <your-bucket-name>

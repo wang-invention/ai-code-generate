@@ -24,6 +24,7 @@ import com.wang.wangaicodemother.model.vo.UserVO;
 import com.wang.wangaicodemother.service.AppService;
 import com.wang.wangaicodemother.service.ChatHistoryService;
 import com.wang.wangaicodemother.service.ScreenshotService;
+import com.wang.wangaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,6 @@ import java.util.stream.Collectors;
 /**
  * 应用 服务层实现。
  *
- * @author <a href="https://github.com">wangInvention</a>
  */
 @Service
 @Slf4j
@@ -48,8 +48,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
 
     @Resource
-    private UserServiceImpl userService;
-
+    private UserService userService;
 
     @Resource
     private AiCodeGeneratorFacade aiCodeGeneratorFacade;

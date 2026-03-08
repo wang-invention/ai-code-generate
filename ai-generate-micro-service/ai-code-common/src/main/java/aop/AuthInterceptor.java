@@ -1,16 +1,13 @@
-package com.wang.wangaicodemother.aop;
+package aop;
 
-
-import com.wang.wangaicodemother.annotation.AuthCheck;
-import com.wang.wangaicodemother.enums.UserRoleEnum;
-import com.wang.wangaicodemother.exception.BusinessException;
-import com.wang.wangaicodemother.exception.ErrorCode;
-import com.wang.wangaicodemother.service.UserService;
+import annotation.AuthCheck;
+import enums.UserRoleEnum;
+import exception.BusinessException;
+import exception.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
