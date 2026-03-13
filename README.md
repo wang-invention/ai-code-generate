@@ -1,6 +1,6 @@
-# Wang AI Code Mother 
+#  AI Generate Code  
 
-基于 Vue 3 + Vite + TypeScript+SpringBoot 的 AI 代码生成平台项目。该项目提供了一个可视化的界面，允许用户通过自然语言与 AI 进行交互，生成、预览并可视化编辑网站代码。
+基于 Vue 3 + Vite + TypeScript+SpringBoot+Langchain4j+LangGraph4j 的 AI 代码生成平台项目。该项目提供了一个可视化的界面，允许用户通过自然语言与 AI 进行交互，生成、预览并可视化编辑网站代码,内置了RAG知识库问答系统，可以自定义知识库进行聊天。
 
 ## ✨ 核心特性
 
@@ -125,4 +125,5 @@ npm run openapi2ts
 
 
 [MIT](LICENSE)
+
 
