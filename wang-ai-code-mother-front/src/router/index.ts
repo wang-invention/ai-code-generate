@@ -20,11 +20,11 @@ const menuItems: MenuProps['items'] = [
     label: '文章',
     path: '/articles'
   },
-  {
-    key: 'community',
-    label: '社区',
-    path: '/community'
-  },
+  // {
+  //   key: 'community',
+  //   label: '社区',
+  //   path: '/community'
+  // },
   {
     key: 'user-manage',
     label: '用户管理',
