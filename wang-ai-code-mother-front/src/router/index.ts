@@ -11,6 +11,11 @@ const menuItems: MenuProps['items'] = [
     path: '/'
   },
   {
+    key: 'rag-chat',
+    label: 'RAG 助手',
+    path: '/rag-chat'
+  },
+  {
     key: 'articles',
     label: '文章',
     path: '/articles'
@@ -92,6 +97,11 @@ const routes: RouteRecordRaw[] = [
     path: '/community',
     name: 'Community',
     component: () => import('../views/CommunityView.vue')
+  },
+  {
+    path: '/rag-chat',
+    name: 'RagChat',
+    component: () => import('../views/rag/RagChatView.vue')
   }
 ]
 

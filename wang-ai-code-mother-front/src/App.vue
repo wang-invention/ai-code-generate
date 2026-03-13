@@ -3,9 +3,11 @@ import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import BasicLayout from './layouts/BasicLayout.vue'
 import { useLoginUserStore } from '@/stores/LoginUser'
+import RagChatView from "@/views/rag/RagChatView.vue";
 
 const route = useRoute()
 const loginUserStore = useLoginUserStore()
+
 
 const isAuthPage = computed(() => {
   return route.path === '/user/login' || route.path === '/user/register'

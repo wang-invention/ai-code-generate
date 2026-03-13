@@ -35,7 +35,7 @@ declare namespace API {
   }
 
   type AppVO = {
-    id?: string
+    id?: number
     appName?: string
     cover?: string
     initPrompt?: string
@@ -50,15 +50,86 @@ declare namespace API {
     user?: UserVO
   }
 
+  type ArticleDetailVO = {
+    articleId?: number
+    title?: string
+    sourceUrl?: string
+    sourcePlatform?: string
+    author?: string
+    publishTime?: string
+    content?: string
+    category?: string
+    isFeatured?: number
+    crawlTime?: string
+    status?: string
+    uniqueKey?: string
+    views?: number
+  }
+
+  type ArticleListVO = {
+    articleId?: number
+    id?: number
+    title?: string
+    sourcePlatform?: string
+    sourceName?: string
+    sourceUrl?: string
+    originalUrl?: string
+    author?: string
+    publishTime?: string
+    category?: string
+    isFeatured?: number
+    views?: number
+    status?: string
+    summary?: string
+  }
+
+  type ArticlePageVO = {
+    records?: ArticleListVO[]
+    total?: number
+    pageNum?: number
+    pageSize?: number
+  }
+
+  type ArticleQueryRequest = {
+    pageNum?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    category?: string
+    startTime?: string
+    endTime?: string
+    keyword?: string
+    status?: string
+    sort?: string
+  }
+
   type BaseResponseAppVO = {
     code?: number
     data?: AppVO
     message?: string
   }
 
+  type BaseResponseArticleDetailVO = {
+    code?: number
+    data?: ArticleDetailVO
+    message?: string
+  }
+
+  type BaseResponseArticlePageVO = {
+    code?: number
+    data?: ArticlePageVO
+    message?: string
+  }
+
   type BaseResponseBoolean = {
     code?: number
     data?: boolean
+    message?: string
+  }
+
+  type BaseResponseCrawlTaskLog = {
+    code?: number
+    data?: CrawlTaskLog
     message?: string
   }
 
@@ -83,6 +154,12 @@ declare namespace API {
   type BaseResponsePageChatHistory = {
     code?: number
     data?: PageChatHistory
+    message?: string
+  }
+
+  type BaseResponsePageCrawlTaskLog = {
+    code?: number
+    data?: PageCrawlTaskLog
     message?: string
   }
 
@@ -134,9 +211,36 @@ declare namespace API {
     lastCreateTime?: string
   }
 
+  type chatRagAndAIParams = {
+    userQuestion: string
+  }
+
   type chatToGenCodeParams = {
     appId: number
     message: string
+  }
+
+  type CrawlLogQueryRequest = {
+    pageNum?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    startDate?: string
+    endDate?: string
+    taskStatus?: string
+  }
+
+  type CrawlTaskLog = {
+    id?: number
+    taskDate?: string
+    startTime?: string
+    endTime?: string
+    totalCrawl?: number
+    successCount?: number
+    failCount?: number
+    failReason?: string
+    taskStatus?: string
+    operator?: string
   }
 
   type DeleteRequest = {
@@ -147,12 +251,20 @@ declare namespace API {
     appId: number
   }
 
+  type executeWorkflowParams = {
+    prompt: string
+  }
+
   type getAppVOByIdByAdminParams = {
     id: number
   }
 
   type getAppVOByIdParams = {
     id: number
+  }
+
+  type getArticleDetailParams = {
+    articleId: number
   }
 
   type getInfoParams = {
@@ -167,10 +279,27 @@ declare namespace API {
     id: number
   }
 
+  type ImageResource = {
+    category?: 'CONTENT' | 'LOGO' | 'ILLUSTRATION' | 'ARCHITECTURE'
+    description?: string
+    qualityResult?: QualityResult
+    url?: string
+  }
+
   type listAppChatHistoryParams = {
     appId: number
     pageSize?: number
     lastCreateTime?: string
+  }
+
+  type listArticlesParams = {
+    queryRequest: ArticleQueryRequest
+    current?: number
+    pageSize?: number
+  }
+
+  type listLogsParams = {
+    queryRequest: CrawlLogQueryRequest
   }
 
   type LoginUserVO = {
@@ -206,6 +335,15 @@ declare namespace API {
     optimizeCountQuery?: boolean
   }
 
+  type PageCrawlTaskLog = {
+    records?: CrawlTaskLog[]
+    pageNumber?: number
+    pageSize?: number
+    totalPage?: number
+    totalRow?: number
+    optimizeCountQuery?: boolean
+  }
+
   type pageParams = {
     page: PageChatHistory
   }
@@ -219,11 +357,21 @@ declare namespace API {
     optimizeCountQuery?: boolean
   }
 
+  type QualityResult = {
+    isValid?: boolean
+    errors?: string[]
+    suggestions?: string[]
+  }
+
   type removeParams = {
     id: number
   }
 
   type ServerSentEventString = true
+
+  type SseEmitter = {
+    timeout?: number
+  }
 
   type User = {
     id?: number
@@ -286,5 +434,17 @@ declare namespace API {
     userProfile?: string
     userRole?: string
     createTime?: string
+  }
+
+  type WorkflowContext = {
+    currentStep?: string
+    originalPrompt?: string
+    imageListStr?: string
+    imageList?: ImageResource[]
+    enhancedPrompt?: string
+    generationType?: 'HTML' | 'MULTI_FILE' | 'VUE_PROJECT'
+    generatedCodeDir?: string
+    buildResultDir?: string
+    errorMessage?: string
   }
 }

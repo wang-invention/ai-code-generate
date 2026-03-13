@@ -47,6 +47,7 @@ jwt:
     - /api/user/login
     - /api/user/register
     - /api/work/flow/execute
+    - /api/rag/
   secret: wangfaming666wangfaming666wangfaming66
 
 crawler:

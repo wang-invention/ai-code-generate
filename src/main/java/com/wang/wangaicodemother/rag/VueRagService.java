@@ -2,6 +2,7 @@ package com.wang.wangaicodemother.rag;
 
 import co.elastic.clients.elasticsearch._types.KnnQuery;
 import com.wang.wangaicodemother.model.entity.VueKnowledge;
+import com.wang.wangaicodemother.rag.domain.RagDocsXiao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -16,7 +17,7 @@ public class VueRagService {
     @Autowired
     private ElasticsearchOperations elasticsearchOperations;
 
-    public List<VueKnowledge> searchByVector(List<Float> vector) {
+    public List<RagDocsXiao> searchByVector(List<Float> vector) {
 
         NativeQuery query = NativeQuery.builder()
                 .withQuery(q -> q
@@ -29,8 +30,8 @@ public class VueRagService {
                 .withMaxResults(5)
                 .build();
 
-        SearchHits<VueKnowledge> hits =
-                elasticsearchOperations.search(query, VueKnowledge.class);
+        SearchHits<RagDocsXiao> hits =
+                elasticsearchOperations.search(query, RagDocsXiao.class);
 
         return hits.stream()
                 .map(hit -> hit.getContent())

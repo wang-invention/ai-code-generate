@@ -2,6 +2,8 @@ package com.wang.wangaicodemother.rag;
 
 import com.wang.wangaicodemother.model.entity.VueKnowledge;
 import com.wang.wangaicodemother.rag.ai.AiChatService;
+import com.wang.wangaicodemother.rag.domain.RagDocsXiao;
+import dev.langchain4j.service.TokenStream;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestTemplate;
+import reactor.core.publisher.Flux;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,28 +37,67 @@ class VueRagServiceTest {
      */
     @Test
     public void testRagAndAI() {
-        //查询es中最相似的文档
-        Double[] vector = getVector("什么是Vue");
-        List<Float> queryVector = Arrays.stream(vector)
-                .map(Number::floatValue)
-                .toList();
-        // 2. 执行向量搜索
-        List<VueKnowledge> result = vueRagService.searchByVector(queryVector);
+//        //查询es中最相似的文档
+//        Double[] vector = getVector("什么是Vue");
+//        List<Float> queryVector = Arrays.stream(vector)
+//                .map(Number::floatValue)
+//                .toList();
+//        // 2. 执行向量搜索
+//        List<RagDocsXiao> result = vueRagService.searchByVector(queryVector);
+//
+//        // 3. 输出
+//        if (result != null && !result.isEmpty()) {
+//            System.err.println("---------------查询向量成功-------------");
+//        } else {
+//            System.err.println("---------------未查询到相似数据-------------");
+//        }
+//
+//        String prompt = buildRagPrompt("Vue.js 定义", result);
+//        // AI 回答
+//        String answer = aiChatService.chat(prompt);
+//        // 输出结果
+//        System.out.println("AI：" + answer);
+    }
 
-        // 3. 输出
-        if (result != null && !result.isEmpty()) {
-            System.err.println("---------------查询向量成功-------------");
-        } else {
-            System.err.println("---------------未查询到相似数据-------------");
-        }
 
-        String prompt = buildRagPrompt("Vue.js 定义", result);
-        // AI 回答
-        String answer = aiChatService.chat(prompt);
-        // 输出结果
-        System.out.println("AI：" + answer);
+//    @Test
+//    public void testRagAIStreaming() throws InterruptedException {
+//        Double[] vector = getVector("什么是Vue");
+//        List<Float> queryVector = Arrays.stream(vector)
+//                .map(Number::floatValue)
+//                .toList();
+//
+//        // 1 RAG 检索
+//        List<VueKnowledge> result = vueRagService.searchByVector(queryVector);
+//
+//        // 2 构建 Prompt
+//        String prompt = buildRagPrompt("什么是Vue", result);
+//
+//        System.out.println("Prompt：");
+//        System.out.println(prompt);
+//
+//        // 3 流式输出
+//        aiChatService.streamChat(prompt, token -> {
+//            System.out.print(token); // 模拟流式打印
+//        });
+//
+//        // 防止测试线程提前结束
+//        Thread.sleep(10000);
+//    }
 
+    @Test
+    public void testRagAIStreaming() throws InterruptedException {
 
+        Flux<String> stream = aiChatService.streamChat("Vue.js 定义");
+
+        stream.subscribe(
+                token -> System.out.print(token),       // 每个 token
+                Throwable::printStackTrace,             // 错误
+                () -> System.out.println("\n完成")       // 完成
+        );
+
+        // 阻塞主线程等待输出
+        Thread.sleep(10000);
     }
 
 
