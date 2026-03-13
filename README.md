@@ -5,6 +5,11 @@
 ## ✨ 核心特性
 
 - **🤖 AI 对话生成**: 通过与 AI 助手对话，自动生成 HTML/CSS/JS 代码或多文件应用。
+- **🧠 RAG 助手（ChatGPT 风格）**:
+  - 支持 **SSE 流式输出**，回答会逐字/逐段实时展示
+  - 支持 **停止生成**
+  - 支持 **Enter 发送、Shift+Enter 换行**
+  - 支持 **本地缓存历史对话**（localStorage）
 - **👁️ 可视化编辑**: 
   - 支持直接在预览窗口中通过点击元素进行可视化编辑。
   - 选中元素后可查看其标签、文本、选择器及源代码片段。
@@ -40,6 +45,7 @@ src/
 ├── views/              # 页面组件
 │   ├── admin/          # 管理员页面
 │   ├── app/            # 应用相关页面 (聊天、编辑)
+│   ├── rag/            # RAG 助手页面
 │   ├── user/           # 用户相关页面
 │   └── ...             # 其他页面
 ├── App.vue             # 根组件
@@ -66,7 +72,19 @@ npm install
 npm run dev
 ```
 
-访问 http://localhost:5173 即可看到项目运行效果。
+访问 `http://localhost:5173` 即可看到项目运行效果。
+
+### RAG 助手入口
+
+- **页面路径**: `/rag-chat`
+- **对应页面**: `wang-ai-code-mother-front/src/views/rag/RagChatView.vue`
+
+### SSE 流式接口说明
+
+RAG 对话使用 **SSE（EventSource）** 进行流式输出（前端不走 Axios 拦截器，避免触发自动跳转登录）。
+
+- **前端请求路径（相对）**: `/api/rag/chat/{userQuestion}`
+- **本地开发**: 需要由 Vite 代理把 `/api` 转发到后端（或自行调整为后端完整地址）
 
 ### 构建生产环境
 
