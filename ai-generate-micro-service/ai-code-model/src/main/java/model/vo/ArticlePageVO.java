@@ -1,6 +1,5 @@
 package model.vo;
 
-import com.wang.wangaicodemother.model.vo.ArticleListVO;
 import lombok.Data;
 
 import java.io.Serializable;

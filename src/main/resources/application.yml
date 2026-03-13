@@ -1,4 +1,8 @@
 spring:
+  elasticsearch:
+    uris: http://129.211.0.210:9200
+    connection-timeout: 5s
+    socket-timeout: 10s
   application:
     name: wang-ai-code-mother
   datasource:

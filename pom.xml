@@ -37,6 +37,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <!-- Spring Data Elasticsearch（无需手动指定版本，父工程已管理） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+        </dependency>
         <!-- 阿里云 DashScope SDK -->
         <dependency>
             <groupId>com.alibaba</groupId>
@@ -71,7 +77,7 @@
             <artifactId>langchain4j-community-redis-spring-boot-starter</artifactId>
             <version>1.1.0-beta7</version>
         </dependency>
-
+       <!--腾讯云cos-->
         <dependency>
             <groupId>com.qcloud</groupId>
             <artifactId>cos_api</artifactId>
