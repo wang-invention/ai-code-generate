@@ -7,6 +7,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# Python 虚拟环境
+myenv/
+# 或者写完整路径（如果myenv在python文件夹下）
+python/myenv/
 ### STS ###
 .apt_generated
 .classpath

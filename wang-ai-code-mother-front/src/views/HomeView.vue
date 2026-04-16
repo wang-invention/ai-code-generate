@@ -1,10 +1,25 @@
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
-import { PlusOutlined, SearchOutlined, ReloadOutlined, ThunderboltOutlined, ShoppingOutlined, FileTextOutlined, BankOutlined, BarChartOutlined, StarOutlined, RightOutlined, AppstoreOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons-vue'
-import { addApp, listMyAppVoByPage, listGoodAppVoByPage } from '@/api/appController'
-import { useLoginUserStore } from '@/stores/LoginUser'
+import {ref, onMounted, nextTick} from 'vue'
+import {useRouter} from 'vue-router'
+import {message} from 'ant-design-vue'
+import {
+  PlusOutlined,
+  ArrowUpOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+  ThunderboltOutlined,
+  ShoppingOutlined,
+  FileTextOutlined,
+  BankOutlined,
+  BarChartOutlined,
+  StarOutlined,
+  RightOutlined,
+  AppstoreOutlined,
+  SettingOutlined,
+  UserOutlined,
+} from '@ant-design/icons-vue'
+import {addApp, listMyAppVoByPage, listGoodAppVoByPage} from '@/api/appController'
+import {useLoginUserStore} from '@/stores/LoginUser'
 
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
@@ -14,29 +29,20 @@ const createLoading = ref(false)
 
 const examplePrompts = [
   {
-    icon: ShoppingOutlined,
-    title: '电商网站',
-    desc: '创建一个现代化的电商网站，包含商品展示、购物车、订单管理等功能',
-    prompt: '创建一个现代化的电商网站，包含商品展示、购物车、订单管理等功能'
+    prompt:
+      '设计一个复古波普艺术风格的电商网页，背景使用鲜艳的橙色和粉色撞色，融入漫画风格的圆点图案和手绘插图' +
+      '。商品展示区以波普画框形式呈现，按钮带有手写字体和跳跃动画。整体风格活泼有趣，适合潮流服饰或艺术品销售。',
   },
   {
-    icon: FileTextOutlined,
-    title: '个人博客',
-    desc: '设计一个简洁优雅的个人博客，支持文章发布、评论、标签分类',
-    prompt: '设计一个简洁优雅的个人博客，支持文章发布、评论、标签分类'
+    prompt: '创建一个企业网站，风格要大气、商务、专业。设计一个完整的企业网站首页，包括导航栏、hero区域、服务介绍、公司优势、客户评价等部分。',
   },
   {
-    icon: BankOutlined,
-    title: '企业官网',
-    desc: '搭建一个专业的企业官网，包含公司介绍、产品展示、联系我们',
-    prompt: '搭建一个专业的企业官网，包含公司介绍、产品展示、联系我们'
+    prompt: '设计一个现代化电商运营后台，背景为纯白，顶部导航使用渐变主题色(#4F46E5 → #2563EB)。订单处理采用卡片流设计，' +
+      '商品管理支持拖拽排序。数据分析区使用动态仪表盘，支持多维度筛选。整体风格简洁高效。',
   },
   {
-    icon: BarChartOutlined,
-    title: '数据仪表盘',
-    desc: '开发一个数据可视化仪表盘，展示关键指标和图表分析',
-    prompt: '开发一个数据可视化仪表盘，展示关键指标和图表分析'
-  }
+    prompt: '参考微博的能力和布局生成一个暗黑色调的话题社区',
+  },
 ]
 
 const myAppsLoading = ref(false)
@@ -53,6 +59,27 @@ const goodAppsCurrentPage = ref(1)
 const goodAppsPageSize = ref(20)
 const goodAppsSearchName = ref('')
 
+const realPlaceholder = ref(
+  '使用 AI零代码生成平台 创建一个数据分析看板，用来分析销售数据、用户增长趋势...',
+)
+
+const typePlaceholder = ref('')
+let index = 0
+
+function typePlaceholderStart() {
+  const text = realPlaceholder.value
+  const speed = 100 // 打字速度
+
+  const timer = setInterval(() => {
+    if (index < text.length) {
+      typePlaceholder.value = text.slice(0, index + 1)
+      index++
+    } else {
+      clearInterval(timer)
+    }
+  }, speed)
+}
+
 const handleCreateApp = async () => {
   if (!promptInput.value.trim()) {
     message.warning('请输入提示词')
@@ -67,7 +94,7 @@ const handleCreateApp = async () => {
 
   createLoading.value = true
   try {
-    const res = await addApp({ initPrompt: promptInput.value.trim() })
+    const res = await addApp({initPrompt: promptInput.value.trim()})
     if (res.data.code === 0 && res.data.data) {
       message.success('创建成功，正在跳转...')
       const appId = res.data.data
@@ -85,6 +112,21 @@ const handleCreateApp = async () => {
 const handleExampleClick = (prompt: string) => {
   promptInput.value = prompt
 }
+// 点击按钮，把内容填进去
+const setInput = (num) => {
+  if (num === 1) {
+    promptInput.value = examplePrompts[0].prompt
+  }
+  if (num === 2) {
+    promptInput.value = examplePrompts[1].prompt
+  }
+  if (num === 3) {
+    promptInput.value = examplePrompts[2].prompt
+  }
+  if (num === 4) {
+    promptInput.value = examplePrompts[3].prompt
+  }
+}
 
 const fetchMyApps = async () => {
   myAppsLoading.value = true
@@ -97,7 +139,7 @@ const fetchMyApps = async () => {
     const res = await listMyAppVoByPage({
       pageNum: myAppsCurrentPage.value,
       pageSize: myAppsPageSize.value,
-      appName: myAppsSearchName.value || undefined
+      appName: myAppsSearchName.value || undefined,
     })
     if (res.data.code === 0 && res.data.data) {
       myApps.value = res.data.data.records || []
@@ -134,7 +176,7 @@ const fetchGoodApps = async () => {
     const res = await listGoodAppVoByPage({
       pageNum: goodAppsCurrentPage.value,
       pageSize: goodAppsPageSize.value,
-      appName: goodAppsSearchName.value || undefined
+      appName: goodAppsSearchName.value || undefined,
     })
     if (res.data.code === 0 && res.data.data) {
       goodApps.value = res.data.data.records || []
@@ -170,6 +212,9 @@ const goToAppChat = (appId: string) => {
 }
 
 onMounted(() => {
+  nextTick(() => {
+    typePlaceholderStart()
+  })
   fetchMyApps()
   fetchGoodApps()
 })
@@ -179,27 +224,22 @@ onMounted(() => {
   <div class="home-container">
     <div class="hero-section">
       <div class="hero-content">
-        <div class="hero-badge">
-          <ThunderboltOutlined />
-          <span>AI 驱动，即时生成</span>
-        </div>
         <h1 class="hero-title">
-          与 AI 对话<br />
+          与 AI 对话
+          <div class="hero-badge">
+            <ThunderboltOutlined />
+          </div>
+          <br />
           <span class="highlight-text">轻松创建应用和网站</span>
         </h1>
-        <p class="hero-subtitle">
-          使用自然语言描述你的想法，AI 即可为你生成完整的网站应用，无需任何编程知识
-        </p>
+        <p class="hero-subtitle">使用自然语言描述你的想法，AI 即可为你生成完整的网站应用</p>
       </div>
-    </div>
-
-    <div class="prompt-section">
-      <div class="prompt-card">
+      <div class="chat-actions">
         <div class="prompt-input-wrapper">
           <a-textarea
             v-model:value="promptInput"
-            placeholder="使用 NoCode 创建一个数据分析看板，用来分析销售数据、用户增长趋势..."
-            :auto-size="{ minRows: 4, maxRows: 8 }"
+            :placeholder="typePlaceholder"
+            :auto-size="{ minRows: 3, maxRows: 8 }"
             class="prompt-textarea"
           />
           <div class="prompt-actions">
@@ -211,37 +251,46 @@ onMounted(() => {
               class="create-button"
             >
               <template #icon>
-                <PlusOutlined />
+                <ArrowUpOutlined />
               </template>
-              立即创建
             </a-button>
           </div>
         </div>
-
-        <div class="examples-section">
-          <div class="examples-header">
-            <span>试试这些示例</span>
-          </div>
-          <div class="examples-grid">
-            <div
-              v-for="(example, index) in examplePrompts"
-              :key="index"
-              class="example-card"
-              @click="handleExampleClick(example.prompt)"
-            >
-              <div class="example-icon">
-                <component :is="example.icon" />
-              </div>
-              <div class="example-content">
-                <div class="example-title">{{ example.title }}</div>
-                <div class="example-desc">{{ example.desc }}</div>
-              </div>
-              <RightOutlined class="example-arrow" />
-            </div>
-          </div>
-        </div>
+      </div>
+      <div class="prompt-examples">
+        <div class="card-item" @click="setInput(1)">波普风电商页面</div>
+        <div class="card-item" @click="setInput(2)">企业网站</div>
+        <div class="card-item" @click="setInput(3)">电商运营后台</div>
+        <div class="card-item" @click="setInput(4)">暗黑话题社区</div>
       </div>
     </div>
+
+    <!--    <div class="prompt-section">-->
+    <!--      <div class="prompt-card">-->
+    <!--        <div class="examples-section">-->
+    <!--          <div class="examples-header">-->
+    <!--            <span>试试这些示例</span>-->
+    <!--          </div>-->
+    <!--          <div class="examples-grid">-->
+    <!--            <div-->
+    <!--              v-for="(example, index) in examplePrompts"-->
+    <!--              :key="index"-->
+    <!--              class="example-card"-->
+    <!--              @click="handleExampleClick(example.prompt)"-->
+    <!--            >-->
+    <!--              <div class="example-icon">-->
+    <!--                <component :is="example.icon" />-->
+    <!--              </div>-->
+    <!--              <div class="example-content">-->
+    <!--                <div class="example-title">{{ example.title }}</div>-->
+    <!--                <div class="example-desc">{{ example.desc }}</div>-->
+    <!--              </div>-->
+    <!--              <RightOutlined class="example-arrow" />-->
+    <!--            </div>-->
+    <!--          </div>-->
+    <!--        </div>-->
+    <!--      </div>-->
+    <!--    </div>-->
 
     <div class="good-apps-section">
       <div class="section-header">
@@ -273,8 +322,8 @@ onMounted(() => {
             <div v-for="i in 8" :key="i" class="app-skeleton">
               <a-skeleton active :loading="true">
                 <a-skeleton-image class="skeleton-cover" />
-                <a-skeleton-input style="width: 100%; margin-top: 12px;" />
-                <a-skeleton-input style="width: 100%; margin-top: 8px;" size="small" />
+                <a-skeleton-input style="width: 100%; margin-top: 12px" />
+                <a-skeleton-input style="width: 100%; margin-top: 8px" size="small" />
               </a-skeleton>
             </div>
           </div>
@@ -289,11 +338,7 @@ onMounted(() => {
               @click="goToAppChat(app.id!)"
             >
               <div class="app-cover">
-                <img
-                  v-if="app.cover"
-                  :src="app.cover"
-                  :alt="app.appName"
-                />
+                <img v-if="app.cover" :src="app.cover" :alt="app.appName" />
                 <div v-else class="default-cover">
                   <span>{{ app.appName?.charAt(0) || 'A' }}</span>
                 </div>
@@ -355,8 +400,8 @@ onMounted(() => {
               <div v-for="i in 8" :key="i" class="app-skeleton">
                 <a-skeleton active :loading="true">
                   <a-skeleton-image class="skeleton-cover" />
-                  <a-skeleton-input style="width: 100%; margin-top: 12px;" />
-                  <a-skeleton-input style="width: 100%; margin-top: 8px;" size="small" />
+                  <a-skeleton-input style="width: 100%; margin-top: 12px" />
+                  <a-skeleton-input style="width: 100%; margin-top: 8px" size="small" />
                 </a-skeleton>
               </div>
             </div>
@@ -375,11 +420,7 @@ onMounted(() => {
                 @click="goToAppChat(app.id!)"
               >
                 <div class="app-cover">
-                  <img
-                    v-if="app.cover"
-                    :src="app.cover"
-                    :alt="app.appName"
-                  />
+                  <img v-if="app.cover" :src="app.cover" :alt="app.appName" />
                   <div v-else class="default-cover">
                     <span>{{ app.appName?.charAt(0) || 'A' }}</span>
                   </div>
@@ -394,9 +435,7 @@ onMounted(() => {
         </div>
         <div v-else class="login-tip">
           <a-empty description="请先登录查看您的应用">
-            <a-button type="primary" @click="router.push('/user/login')">
-              去登录
-            </a-button>
+            <a-button type="primary" @click="router.push('/user/login')"> 去登录</a-button>
           </a-empty>
         </div>
       </div>
@@ -417,6 +456,36 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.prompt-examples {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.card-item {
+  display: flex;
+  width: 120px;
+  height: 30px;
+  background-color: #ffffff;
+  border: 2px solid #ffffff;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-right: 12px;
+}
+
+.card-item:last-child {
+  margin-right: 0;
+}
+
+.card-item:hover {
+  background-color: #adedbb;
+  color: #fff;
+}
+
 .home-container {
   max-width: 1280px;
   margin: 0 auto;
@@ -425,64 +494,67 @@ onMounted(() => {
 }
 
 .hero-section {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 40px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 40px;
-  padding: 24px 24px 28px;
-  background: #f9fafb;
+  justify-content: center;
+  padding: 80px 20px;
+  margin: 60px 0;
+  background: transparent;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: none;
+}
+
+.chat-actions {
+  border: 1px solid #ddd; /* 浅灰色边框，和你原有设计统一 */
+  border-radius: 20px; /* 和输入框圆角一致，无棱角 */
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  background: white;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
 }
 
 .hero-badge {
   display: inline-flex;
-  align-items: center;
+  align-items: center; /* 垂直居中（核心） */
+  justify-content: center;
   gap: 8px;
-  padding: 10px 24px;
-  background: #eef2ff;
+  padding: 6px 16px; /* 调小一点，更贴近文字高度 */
+  background: white;
   border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
   color: #1890ff;
+
+  /* 👇 下面这 3 行是对齐关键 */
+  vertical-align: middle; /* 和旁边文字垂直对齐 */
+  line-height: 1; /* 不撑高行高 */
   margin-bottom: 32px;
 }
 
 .hero-title {
-  font-size: 32px;
-  font-weight: 600;
-  margin: 0 0 16px 0;
-  line-height: 1.4;
-  color: #111827;
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .highlight-text {
-  color: #111827;
+  background: linear-gradient(90deg, #6366f1, #06b6d4);
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 .hero-subtitle {
   font-size: 14px;
-  margin: 0;
+  margin-bottom: 40px;
   color: #4b5563;
   max-width: 480px;
   line-height: 1.7;
   font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .prompt-section {
@@ -490,60 +562,46 @@ onMounted(() => {
 }
 
 .prompt-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 20px 20px 16px;
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  padding: 24px;
 }
 
 .prompt-input-wrapper {
-  margin-bottom: 48px;
+  width: 100%;
+  max-width: 720px;
 }
 
 .prompt-textarea {
-  font-size: 14px;
-  border-radius: 4px;
-  border: 1px solid #d1d5db;
-  transition: all 0.2s;
-  padding: 16px;
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+  padding: 8px 10px;
+  border-radius: 20px;
+  font-size: 16px;
+  border: none;
 }
 
 .prompt-textarea:focus {
-  border-color: #2563eb;
   box-shadow: none;
 }
 
 .prompt-actions {
+  border-radius: 20px;
+  height: 35px;
   display: flex;
+  background: white;
   justify-content: flex-end;
-  margin-top: 12px;
 }
 
 .create-button {
-  height: 40px;
-  padding: 0 24px;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 4px;
-  background: #1890ff;
-  border: 1px solid #1890ff;
-  transition: all 0.2s;
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+  /* 强制宽高一样 */
+  width: 30px !important;
+  height: 30px !important;
+  padding: 5px !important;
+  border-radius: 50% !important;
+  margin: 2.5px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
 }
 
 .create-button:hover {
@@ -562,13 +620,7 @@ onMounted(() => {
   color: #333;
   margin-bottom: 24px;
   font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .examples-grid {
@@ -578,21 +630,16 @@ onMounted(() => {
 }
 
 .example-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 14px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
+  border: none;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
 }
 
 .example-card:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
 .example-icon {
@@ -611,13 +658,7 @@ onMounted(() => {
   color: #111827;
   margin-bottom: 6px;
   font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .example-desc {
@@ -625,13 +666,7 @@ onMounted(() => {
   color: #6b7280;
   line-height: 1.6;
   font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .example-arrow {
@@ -657,13 +692,7 @@ onMounted(() => {
   margin: 0 0 8px 0;
   color: #111827;
   font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .section-title p {
@@ -671,13 +700,7 @@ onMounted(() => {
   color: #6b7280;
   margin: 0;
   font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .section-actions {
@@ -688,7 +711,6 @@ onMounted(() => {
 
 .search-input {
   width: 280px;
-  border-radius: 4px;
 }
 
 .icon-button {
@@ -730,17 +752,17 @@ onMounted(() => {
 }
 
 .app-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
+  border: none;
+  border-radius: 16px;
   overflow: hidden;
-  cursor: pointer;
-  transition: all 0.2s;
+  background: white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
 }
 
 .app-card:hover {
-  border-color: #d1d5db;
-  box-shadow: none;
+  transform: translateY(-6px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
 }
 
 .app-card.featured {
@@ -800,7 +822,8 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .app-desc {
@@ -814,7 +837,8 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   height: 42px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .empty-state,

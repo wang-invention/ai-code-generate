@@ -123,25 +123,31 @@ const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
 
 <style scoped>
 .header {
-  background-color: #fff;
-  border-bottom: 1px solid #e8e8e8;
+  width: 100%;
+  background-color: transparent;
   height: 64px;
   line-height: 64px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 16px 0 24px;
 }
 
 .header-left {
+  flex: 1;
   display: flex;
   align-items: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
 }
 
 .logo {
